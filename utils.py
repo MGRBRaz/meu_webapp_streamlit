@@ -18,14 +18,61 @@ def format_date(date_str):
     except:
         return date_str
 
+def calculate_free_time_expiry(eta_date, free_time_days):
+    """Calculate free time expiry date based on ETA and free time days"""
+    if pd.isna(eta_date) or eta_date == "" or not free_time_days:
+        return ""
+    try:
+        eta_obj = pd.to_datetime(eta_date, dayfirst=True)
+        days = int(free_time_days)
+        expiry_date = eta_obj + pd.Timedelta(days=days)
+        return expiry_date.strftime("%d/%m/%Y")
+    except:
+        return ""
+
+def calculate_period_expiry(start_date, days_per_period):
+    """Calculate period expiry date based on start date and days per period"""
+    if pd.isna(start_date) or start_date == "" or not days_per_period:
+        return ""
+    try:
+        start_obj = pd.to_datetime(start_date, dayfirst=True)
+        days = int(days_per_period)
+        expiry_date = start_obj + pd.Timedelta(days=days)
+        return expiry_date.strftime("%d/%m/%Y")
+    except:
+        return ""
+
+def calculate_storage_days(entry_date):
+    """Calculate storage days from entry date to today"""
+    if pd.isna(entry_date) or entry_date == "":
+        return "0"
+    try:
+        entry_obj = pd.to_datetime(entry_date, dayfirst=True)
+        today = pd.to_datetime(datetime.now().date())
+        days = (today - entry_obj).days
+        return str(max(0, days))
+    except:
+        return "0"
+
 def get_status_color(status):
     """Get color for status indicator"""
     status_colors = {
+        # Status básicos
         "Em andamento": "orange",
         "Concluído": "green",
         "Atrasado": "red",
         "Pendente": "blue",
-        "Cancelado": "gray"
+        "Cancelado": "gray",
+        
+        # Status de importação adicionais
+        "Novo Processo": "#6a0dad",  # Roxo
+        "Navio em Santos": "#4169e1",  # Azul royal
+        "Chegando no porto de Santos": "#2e8b57",  # Verde mar
+        "Chegada do navio alterada": "#ff4500",  # Laranja avermelhado
+        "Trânsito Aduaneiro": "#8b4513",  # Marrom
+        "Em rota de trânsito aduaneiro": "#8b4513",  # Marrom
+        "Presença de carga em Bauru": "#20b2aa",  # Verde azulado
+        "Entrega programada": "#228b22"  # Verde floresta
     }
     return status_colors.get(status, "orange")
 

@@ -2,7 +2,9 @@ import pandas as pd
 import streamlit as st
 import os
 import json
+import uuid
 from datetime import datetime
+from utils import format_date
 
 # Default data structure based on the screenshots
 DEFAULT_DATA = {
@@ -11,6 +13,9 @@ DEFAULT_DATA = {
         "logo_path": "assets/images/jgr_logo.png",
         "contact": "contato@jgrbroker.com",
         "phone": "+55 (XX) XXXX-XXXX"
+    },
+    "config": {
+        "storage_days_per_period": 30  # Dias por período de armazenagem (configurável)
     },
     "processes": [
         {
@@ -33,7 +38,17 @@ DEFAULT_DATA = {
             "invoice_number": "7666",
             "di": "20/146885-6",
             "free_time": "7",
+            "free_time_expiry": "25/01/2023",  # Vencimento do Free Time
             "return_date": "25/01/2023",
+            "po": "PO123456",  # Número da Purchase Order
+            "product": "Eletrônicos",  # Produto
+            "map": "MAPA123",  # Número do Mapa
+            "port_entry_date": "19/01/2023",  # Data de entrada no Porto/Recinto
+            "current_period_start": "19/01/2023",  # Início do período atual de armazenagem
+            "current_period_expiry": "18/02/2023",  # Vencimento do período
+            "storage_days": "6",  # Dias armazenados (calculado)
+            "original_docs": "Sim",  # Documentos originais
+            "empty_return": "25/01/2023",  # Devolução de vazio
             "events": [
                 {"date": "07/04/23", "description": "Processo criado", "user": "Admin"},
                 {"date": "10/04/23", "description": "Documentação recebida", "user": "Admin"},
@@ -60,7 +75,17 @@ DEFAULT_DATA = {
             "invoice_number": "7667",
             "di": "20/146886-7",
             "free_time": "7",
+            "free_time_expiry": "27/01/2023",  # Vencimento do Free Time
             "return_date": "27/01/2023",
+            "po": "PO654321",  # Número da Purchase Order
+            "product": "Máquinas",  # Produto
+            "map": "MAPA456",  # Número do Mapa
+            "port_entry_date": "21/01/2023",  # Data de entrada no Porto/Recinto
+            "current_period_start": "21/01/2023",  # Início do período atual de armazenagem
+            "current_period_expiry": "20/02/2023",  # Vencimento do período
+            "storage_days": "8",  # Dias armazenados (calculado)
+            "original_docs": "Não",  # Documentos originais
+            "empty_return": "27/01/2023",  # Devolução de vazio
             "events": [
                 {"date": "08/04/23", "description": "Processo criado", "user": "Admin"},
                 {"date": "12/04/23", "description": "Documentação recebida", "user": "Admin"},
@@ -75,9 +100,18 @@ def load_data():
     try:
         if os.path.exists("data.json"):
             with open("data.json", "r") as f:
-                return json.load(f)
+                data = json.load(f)
         else:
-            return DEFAULT_DATA
+            data = DEFAULT_DATA
+            
+        # Garantir que todos os eventos tenham IDs únicos
+        for process in data["processes"]:
+            if "events" in process:
+                for event in process["events"]:
+                    if "id" not in event:
+                        event["id"] = str(uuid.uuid4())
+        
+        return data
     except Exception as e:
         st.error(f"Erro ao carregar dados: {e}")
         return DEFAULT_DATA
@@ -142,18 +176,50 @@ def delete_process(process_id):
             return True
     return False
 
-def add_event(process_id, description):
+def add_event(process_id, description, user=None):
     """Add an event to a process"""
+    if user is None and 'username' in st.session_state:
+        user = st.session_state.username
+    else:
+        user = "Admin"
+        
     for process in st.session_state.data["processes"]:
         if process["id"] == process_id:
+            # Gerar um ID único para o evento
+            event_id = str(uuid.uuid4())
             process["events"].append({
+                "id": event_id,
                 "date": datetime.now().strftime("%d/%m/%Y"),
                 "description": description,
-                "user": "Admin"
+                "user": user
             })
             process["last_update"] = datetime.now().strftime("%d/%m/%Y")
             save_data(st.session_state.data)
             return True
+    return False
+
+def edit_event(process_id, event_id, new_description):
+    """Edit an existing event"""
+    for process in st.session_state.data["processes"]:
+        if process["id"] == process_id:
+            for event in process["events"]:
+                if event.get("id") == event_id:
+                    event["description"] = new_description
+                    process["last_update"] = datetime.now().strftime("%d/%m/%Y")
+                    save_data(st.session_state.data)
+                    return True
+    return False
+
+def delete_event(process_id, event_id):
+    """Delete an event from a process"""
+    for process in st.session_state.data["processes"]:
+        if process["id"] == process_id:
+            for i, event in enumerate(process["events"]):
+                if event.get("id") == event_id:
+                    del process["events"][i]
+                    process["last_update"] = datetime.now().strftime("%d/%m/%Y")
+                    save_data(st.session_state.data)
+                    return True
     return False
 
 def generate_process_id():
@@ -174,8 +240,56 @@ def get_processes_df():
     
     df = pd.DataFrame(st.session_state.data["processes"])
     
-    # Select columns for main table view
-    display_columns = ["id", "ref", "invoice", "origin", "type", "eta", 
-                       "status", "observations", "last_update"]
+    # Atualizar os dias armazenados para todos os processos
+    for i, process in enumerate(st.session_state.data["processes"]):
+        if "port_entry_date" in process and process["port_entry_date"]:
+            try:
+                entry_date = pd.to_datetime(process["port_entry_date"], dayfirst=True)
+                today = pd.to_datetime(datetime.now().date())
+                days_stored = (today - entry_date).days
+                st.session_state.data["processes"][i]["storage_days"] = str(max(0, days_stored))
+            except Exception as e:
+                pass
     
-    return df[display_columns]
+    # Atualizar o DataFrame
+    df = pd.DataFrame(st.session_state.data["processes"])
+    
+    # Select columns for main table view (removido "id" conforme solicitado)
+    display_columns = [
+        "status", "po", "ref", "origin", "product", "eta", 
+        "free_time", "free_time_expiry", "empty_return", "map", 
+        "invoice_number", "port_entry_date", "current_period_start", 
+        "current_period_expiry", "storage_days", "original_docs"
+    ]
+    
+    # Manter o id para uso interno, embora não seja exibido na tabela
+    internal_id_column = "id"
+    
+    # Garantir que todas as colunas existam
+    for col in display_columns:
+        if col not in df.columns:
+            df[col] = ""
+    
+    # Criar uma cópia do dataframe com as colunas de exibição e ID
+    # Isso garante que o ID está disponível para operações internas
+    # mas não aparece na tabela visível para o usuário
+    full_df = df.copy()
+    
+    # Formatação das colunas de data para o padrão brasileiro (DD/MM/YYYY)
+    date_columns = [
+        "eta", "free_time_expiry", "empty_return", "port_entry_date", 
+        "current_period_start", "current_period_expiry", "return_date"
+    ]
+    
+    # Aplicar formatação apenas às colunas de data que existem no dataframe
+    for col in date_columns:
+        if col in full_df.columns:
+            full_df[col] = full_df[col].apply(lambda x: format_date(x) if x else "")
+    
+    # Reorganizar colunas para que ID seja a primeira (para uso interno)
+    columns_with_id = ["id"] + display_columns
+    
+    # Garantir que não há duplicatas
+    columns_with_id = list(dict.fromkeys(columns_with_id))
+    
+    return full_df[columns_with_id]

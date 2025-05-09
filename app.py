@@ -10,6 +10,7 @@ from components.view_details import display_detail_view
 from components.client_view import display_client_view
 from components.share import display_share_interface, validate_share_token
 from components.settings import display_settings
+from components.auth import display_login, display_user_management, init_auth_state, logout
 from data import load_data, save_data
 from assets.stock_photos import get_random_image
 
@@ -19,6 +20,18 @@ st.set_page_config(
     page_icon="🚢",
     layout="wide",
 )
+
+# Carregar estilos CSS personalizados
+def load_css():
+    css_file = "assets/custom.css"
+    if os.path.exists(css_file):
+        with open(css_file, "r") as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    else:
+        st.warning(f"Arquivo CSS não encontrado: {css_file}")
+
+# Carregar os estilos CSS
+load_css()
 
 # Initialize session state
 if 'data' not in st.session_state:
@@ -31,6 +44,8 @@ if 'edit_mode' not in st.session_state:
     st.session_state.edit_mode = False
 if 'filter_value' not in st.session_state:
     st.session_state.filter_value = ""
+# Inicializa o estado de autenticação
+init_auth_state()
 
 # Check URL parameters for client view mode
 query_params = st.query_params
@@ -61,51 +76,112 @@ def navigate_to(page, process_id=None):
         st.session_state.selected_process = process_id
     st.rerun()
 
+# Verificar autenticação para acessar o sistema
+if not st.session_state.authenticated:
+    display_login()
+    st.stop()
+
 # Header with logo and navigation
-col1, col2 = st.columns([1, 3])
+col1, col2, col3 = st.columns([1, 3, 1])
 
 with col1:
-    st.image("assets/images/jgr_logo.png", width=150)
+    try:
+        st.image("assets/images/jgr_logo.png", width=150)
+    except:
+        st.write("**JGR BROKER**")
     
 with col2:
     st.title("Sistema de Acompanhamento de Importação")
     st.caption("JGR BROKER - Monitoramento e gestão de processos de importação")
 
-# Navigation bar
-nav_col1, nav_col2, nav_col3, nav_col4, nav_col5 = st.columns(5)
-with nav_col1:
+with col3:
+    # Exibir informações do usuário
+    st.write(f"Olá, **{st.session_state.user_name}**")
+    role_display = "Administrador" if st.session_state.user_role == "admin" else "Cliente"
+    st.caption(f"Perfil: {role_display}")
+    if st.button("🚪 Sair", use_container_width=True):
+        logout()
+        st.rerun()
+
+# Navigation bar - Mostra todos os botões para administradores
+if st.session_state.user_role == "admin":
+    nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6 = st.columns(6)
+    with nav_col1:
+        if st.button("📋 Painel", use_container_width=True):
+            navigate_to("home")
+    with nav_col2:
+        if st.button("➕ Novo Processo", use_container_width=True):
+            st.session_state.edit_mode = False
+            navigate_to("add_edit")
+    with nav_col3:
+        if st.button("🔗 Compartilhar", use_container_width=True):
+            navigate_to("share")
+    with nav_col4:
+        if st.button("📊 Relatórios", use_container_width=True):
+            navigate_to("reports")
+    with nav_col5:
+        if st.button("⚙️ Configurações", use_container_width=True):
+            navigate_to("settings")
+    with nav_col6:
+        if st.button("👥 Usuários", use_container_width=True):
+            navigate_to("users")
+else:
+    # Para clientes, apenas mostrar o botão de painel
     if st.button("📋 Painel", use_container_width=True):
         navigate_to("home")
-with nav_col2:
-    if st.button("➕ Novo Processo", use_container_width=True):
-        st.session_state.edit_mode = False
-        navigate_to("add_edit")
-with nav_col3:
-    if st.button("🔗 Compartilhar", use_container_width=True):
-        navigate_to("share")
-with nav_col4:
-    if st.button("📊 Relatórios", use_container_width=True):
-        navigate_to("reports")
-with nav_col5:
-    if st.button("⚙️ Configurações", use_container_width=True):
-        navigate_to("settings")
 
 st.divider()
 
 # Display the current page
 if st.session_state.current_page == "home":
-    display_home(navigate_to)
+    # Cliente só vê seus processos
+    if st.session_state.user_role == 'client':
+        display_home(navigate_to, filter_ids=st.session_state.client_processes)
+    else:
+        display_home(navigate_to)
 elif st.session_state.current_page == "add_edit":
-    display_add_edit_form(navigate_to)
+    # Somente admin pode adicionar/editar
+    if st.session_state.user_role == 'admin':
+        display_add_edit_form(navigate_to)
+    else:
+        st.error("Você não tem permissão para acessar esta página.")
+        navigate_to("home")
 elif st.session_state.current_page == "view_details":
-    display_detail_view(navigate_to)
+    # Cliente só pode ver seus processos
+    if st.session_state.user_role == 'client' and st.session_state.selected_process not in st.session_state.client_processes:
+        st.error("Você não tem permissão para visualizar este processo.")
+        navigate_to("home")
+    else:
+        display_detail_view(navigate_to)
 elif st.session_state.current_page == "share":
-    display_share_interface()
+    # Somente admin pode compartilhar
+    if st.session_state.user_role == 'admin':
+        display_share_interface()
+    else:
+        st.error("Você não tem permissão para acessar esta página.")
+        navigate_to("home")
 elif st.session_state.current_page == "reports":
-    st.header("Relatórios")
-    st.info("Funcionalidade de relatórios será implementada em uma versão futura.")
+    # Somente admin pode acessar relatórios
+    if st.session_state.user_role == 'admin':
+        st.header("Relatórios")
+        st.info("Funcionalidade de relatórios será implementada em uma versão futura.")
+    else:
+        st.error("Você não tem permissão para acessar esta página.")
+        navigate_to("home")
 elif st.session_state.current_page == "settings":
-    display_settings()
+    # Somente admin pode acessar configurações
+    if st.session_state.user_role == 'admin':
+        display_settings()
+    else:
+        st.error("Você não tem permissão para acessar esta página.")
+        navigate_to("home")
+elif st.session_state.current_page == "users":
+    # Somente admin pode gerenciar usuários
+    if st.session_state.user_role == 'admin':
+        display_user_management()
+    else:
+        st.error("Você não tem permissão para acessar esta página.")
+        navigate_to("home")
 
 # Footer
 st.divider()

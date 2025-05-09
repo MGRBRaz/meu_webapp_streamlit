@@ -1,87 +1,52 @@
 {
     "processes": [
         {
-            "id": "20230001",
-            "ref": "DKA-1/Sydex Adventure",
-            "invoice": "148/23",
+            "id": "20250001",
+            "ref": "IMJ-0132/25",
+            "invoice": "7226206",
             "origin": "CHINA",
-            "type": "FCL 1 X 40",
-            "eta": "22/04/23",
+            "type": "importacao",
+            "container_type": "40",
+            "eta": "16/06/2025",
             "status": "Em andamento",
             "observations": "",
-            "exporter": "SNF INC",
-            "ship": "MSC VIDHI",
-            "agent": "MSC",
-            "bl_number": "MEDBX123456",
-            "arrival_date": "18/01/2023",
-            "container": "TTNU1212342",
-            "terminal": "ECOPORTO",
-            "invoice_number": "7666",
-            "di": "20/146885-6",
+            "exporter": "Snf-China",
+            "ship": "HYUNDAI PLATINUM",
+            "agent": "ONE",
+            "bl_number": "ONEYSH5EZ0204600",
+            "container": "TLLUI7004112",
+            "terminal": "",
+            "invoice_number": "",
+            "di": "",
             "free_time": "7",
-            "return_date": "25/01/2023",
-            "last_update": "09/05/25",
+            "free_time_expiry": "23/06/2025",
+            "po": "2025/078",
+            "product": "FLONEX 9004 SI",
+            "map": "",
+            "port_entry_date": "",
+            "current_period_start": "",
+            "current_period_expiry": "",
+            "storage_days": "0",
+            "original_docs": "Sim",
+            "empty_return": "",
+            "last_update": "09/05/2025",
             "events": [
                 {
-                    "date": "07/04/23",
-                    "description": "Processo criado",
-                    "user": "Admin"
-                },
-                {
-                    "date": "10/04/23",
-                    "description": "Documenta\u00e7\u00e3o recebida",
-                    "user": "Admin"
-                },
-                {
-                    "date": "15/04/23",
-                    "description": "Navio em tr\u00e2nsito",
-                    "user": "Admin"
+                    "date": "09/05/2025",
+                    "description": "Processo criado...",
+                    "user": "Admin",
+                    "id": "55ba288c-8342-4b24-b221-68e7d92b232c"
                 },
                 {
                     "date": "09/05/2025",
-                    "description": "Processo atualizado",
-                    "user": "Admin"
-                }
-            ]
-        },
-        {
-            "id": "20230002",
-            "ref": "DKL-1/Sydex Adventure",
-            "invoice": "149/23",
-            "origin": "CHINA",
-            "type": "FCL 1 X 40",
-            "eta": "25/04/23",
-            "status": "Em andamento",
-            "observations": "",
-            "last_update": "08/04/23",
-            "exporter": "SNF INC",
-            "ship": "MSC VIDHI",
-            "agent": "MSC",
-            "bl_number": "MEDBX654321",
-            "arrival_date": "20/01/2023",
-            "container": "TTNU3434343",
-            "terminal": "ECOPORTO",
-            "invoice_number": "7667",
-            "di": "20/146886-7",
-            "free_time": "7",
-            "return_date": "27/01/2023",
-            "events": [
-                {
-                    "date": "08/04/23",
-                    "description": "Processo criado",
-                    "user": "Admin"
-                },
-                {
-                    "date": "12/04/23",
-                    "description": "Documenta\u00e7\u00e3o recebida",
-                    "user": "Admin"
-                },
-                {
-                    "date": "17/04/23",
-                    "description": "Navio em tr\u00e2nsito",
-                    "user": "Admin"
+                    "description": "Processo atribu\u00eddo ao cliente Cliente Demonstra\u00e7\u00e3o",
+                    "user": "Admin",
+                    "id": "9391e394-993a-46c6-9d90-d572a7f647bf"
                 }
             ]
         }
-    ]
+    ],
+    "config": {
+        "storage_days_per_period": 15
+    }
 }
