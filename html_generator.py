@@ -76,6 +76,33 @@ def generate_process_html(process_id, include_details=True):
                 font-weight: bold;
                 display: inline-block;
             }}
+            /* Estilo para os contadores de status */
+            .status-counts-container {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 15px;
+            }}
+            .status-count-item {{
+                padding: 5px 10px;
+                border-radius: 15px;
+                font-size: 0.9em;
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                color: white;
+            }}
+            .status-count-badge {{
+                background: rgba(255,255,255,0.7);
+                border-radius: 50%;
+                width: 22px;
+                height: 22px;
+                text-align: center;
+                line-height: 22px;
+                margin-left: 8px;
+                font-weight: bold;
+                color: #333;
+            }}
             .section {{
                 margin-bottom: 30px;
                 padding: 15px;
@@ -155,7 +182,7 @@ def generate_process_html(process_id, include_details=True):
         <div class="container">
             <div class="header">
                 <div>
-                    <h1>Processo de Importação - {process_id}</h1>
+                    <h1>Processo de {"Exportação" if process.get('type', '') == "exportacao" else "Importação"} - {process_id}</h1>
                     <p>Referência: {process.get('ref', '')}</p>
                 </div>
                 <div>
@@ -194,8 +221,8 @@ def generate_process_html(process_id, include_details=True):
                         <div class="value">{process.get('product', '')}</div>
                     </div>
                     <div class="grid-item">
-                        <div class="label">Tipo</div>
-                        <div class="value">{process.get('type', '')}</div>
+                        <div class="label">Tipo de Processo</div>
+                        <div class="value">{"Exportação" if process.get('type', '') == "exportacao" else "Importação"}</div>
                     </div>
                     <div class="grid-item">
                         <div class="label">ETA</div>
@@ -212,10 +239,10 @@ def generate_process_html(process_id, include_details=True):
     # Seção de Embarque
     html += f"""
             <div class="section">
-                <h2 class="section-title">Informações de Embarque</h2>
+                <h2 class="section-title">{"Informações de Exportação" if process.get('type', '') == "exportacao" else "Informações de Embarque"}</h2>
                 <div class="grid">
                     <div class="grid-item">
-                        <div class="label">Exportador</div>
+                        <div class="label">{"Embarcador" if process.get('type', '') == "exportacao" else "Exportador"}</div>
                         <div class="value">{process.get('exporter', '')}</div>
                     </div>
                     <div class="grid-item">
@@ -257,14 +284,14 @@ def generate_process_html(process_id, include_details=True):
     # Seção de Armazenagem
     html += f"""
             <div class="section">
-                <h2 class="section-title">Informações de Armazenagem</h2>
+                <h2 class="section-title">{"Informações do Terminal de Exportação" if process.get('type', '') == "exportacao" else "Informações de Armazenagem"}</h2>
                 <div class="grid">
                     <div class="grid-item">
-                        <div class="label">Terminal</div>
+                        <div class="label">{"Terminal de Exportação" if process.get('type', '') == "exportacao" else "Terminal"}</div>
                         <div class="value">{process.get('terminal', '')}</div>
                     </div>
                     <div class="grid-item">
-                        <div class="label">Entrada no Porto/Recinto</div>
+                        <div class="label">{"Entrada no Terminal" if process.get('type', '') == "exportacao" else "Entrada no Porto/Recinto"}</div>
                         <div class="value">{format_date(process.get('port_entry_date', ''))}</div>
                     </div>
                     <div class="grid-item">
@@ -297,7 +324,7 @@ def generate_process_html(process_id, include_details=True):
                         <div class="value">{process.get('invoice_number', '')}</div>
                     </div>
                     <div class="grid-item">
-                        <div class="label">D.I.</div>
+                        <div class="label">{"DU-E" if process.get('type', '') == "exportacao" else "D.I."}</div>
                         <div class="value">{process.get('di', '')}</div>
                     </div>
                     <div class="grid-item">
@@ -312,6 +339,16 @@ def generate_process_html(process_id, include_details=True):
                         <div class="label">Última Atualização</div>
                         <div class="value">{format_date(process.get('last_update', ''))}</div>
                     </div>
+                    {f'''
+                    <div class="grid-item">
+                        <div class="label">Importador</div>
+                        <div class="value">{process.get('importer', '')}</div>
+                    </div>
+                    <div class="grid-item">
+                        <div class="label">Deadline</div>
+                        <div class="value">{format_date(process.get('deadline', ''))}</div>
+                    </div>
+                    ''' if process.get('type', '') == "exportacao" else ''}
                 </div>
             </div>
     """
@@ -472,7 +509,57 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                 background: #f9f9f9;
                 border-radius: 5px;
                 display: flex;
+                flex-wrap: wrap;
                 align-items: center;
+                gap: 15px;
+            }}
+            
+            .status-counts-wrapper {{
+                margin: 20px 0;
+            }}
+            
+            .status-counts-wrapper h3 {{
+                font-size: 16px;
+                margin-bottom: 10px;
+                color: #555;
+            }}
+            
+            .status-counts {{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                padding: 15px;
+                background: #f9f9f9;
+                border-radius: 5px;
+                border: 1px solid #e0e0e0;
+            }}
+            
+            .status-count-item {{
+                display: inline-flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 15px;
+                border-radius: 20px;
+                color: white;
+                font-size: 0.85rem;
+                font-weight: bold;
+                cursor: pointer;
+                min-width: 130px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                transition: all 0.2s ease;
+            }}
+            
+            .status-count-item:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            }}
+            
+            .status-count-badge {{
+                background-color: rgba(255,255,255,0.3);
+                padding: 2px 8px;
+                border-radius: 12px;
+                margin-left: 8px;
+                font-weight: bold;
             }}
             .filter-input {{
                 padding: 8px 12px;
@@ -625,6 +712,19 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                     <option value="importacao">Importação</option>
                     <option value="exportacao">Exportação</option>
                 </select>
+                
+                <span class="filter-label" style="margin-left: 20px;">Status:</span>
+                <select id="statusFilter" class="filter-input">
+                    <option value="todos">Todos</option>
+                    <!-- Opções de status serão adicionadas via JavaScript -->
+                </select>
+            </div>
+            
+            <div class="status-counts-wrapper">
+                <h3>Status dos Processos</h3>
+                <div id="statusCounts" class="status-counts">
+                    <!-- Contadores de status serão adicionados aqui via JavaScript -->
+                </div>
             </div>
             
             <table id="processesTable">
@@ -632,7 +732,7 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                     <tr>
                         <th>ID</th>
                         <th>Status</th>
-                        <th>Tipo</th>
+                        <th>Tipo de Processo</th>
                         <th>Referência</th>
                         <th>PO</th>
                         <th>Origem</th>
@@ -640,6 +740,13 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                         <th>ETA</th>
                         <th>Free Time</th>
                         <th>Vencimento Free Time</th>
+                        <th>Devolução de Vazio</th>
+                        <th>Mapa</th>
+                        <th>Nota Fiscal</th>
+                        <th>Entrada no Porto</th>
+                        <th>Início do Período</th>
+                        <th>Vencimento do Período</th>
+                        <th>Dias Armazenados</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -648,6 +755,17 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
     # Adicionar cada processo como uma linha da tabela
     process_details_html = ""
     
+    # Registrar todos os status para debug
+    status_counts = {}
+    for _, row in filtered_df.iterrows():
+        row_status = row.get('status', '')
+        if row_status in status_counts:
+            status_counts[row_status] += 1
+        else:
+            status_counts[row_status] = 1
+    
+    print(f"Status encontrados no DataFrame: {status_counts}")
+    
     for _, row in filtered_df.iterrows():
         process_id = row['id']
         status = row.get('status', '')
@@ -655,7 +773,7 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
         
         # Linha principal com dados básicos
         html += f"""
-                    <tr class="process-row" data-id="{process_id}" data-type="{row.get('type', '')}" onclick="toggleDetails('{process_id}')">
+                    <tr class="process-row" data-id="{process_id}" data-type="{row.get('type', '')}" data-status="{status}" onclick="toggleDetails('{process_id}')">
                         <td>{process_id}</td>
                         <td><div class="status-badge" style="background-color: {status_color}">{status}</div></td>
                         <td>{"Exportação" if row.get('type', '') == "exportacao" else "Importação"}</td>
@@ -666,6 +784,13 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                         <td>{format_date(row.get('eta', ''))}</td>
                         <td>{row.get('free_time', '')}</td>
                         <td>{format_date(row.get('free_time_expiry', ''))}</td>
+                        <td>{format_date(row.get('empty_return', ''))}</td>
+                        <td>{row.get('map', '')}</td>
+                        <td>{row.get('invoice_number', '')}</td>
+                        <td>{format_date(row.get('port_entry_date', ''))}</td>
+                        <td>{format_date(row.get('current_period_start', ''))}</td>
+                        <td>{format_date(row.get('current_period_expiry', ''))}</td>
+                        <td>{row.get('storage_days', '0')}</td>
                     </tr>
         """
         
@@ -681,15 +806,15 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                             <div class="details-container">
                                 <div class="tab-container no-print">
                                     <button class="tab active" onclick="openTab(event, '{process_id}-info')">Informações Gerais</button>
-                                    <button class="tab" onclick="openTab(event, '{process_id}-transport')">Transporte</button>
+                                    <button class="tab" onclick="openTab(event, '{process_id}-transport')">{"Exportação" if process.get('type', '') == "exportacao" else "Transporte"}</button>
                                     <button class="tab" onclick="openTab(event, '{process_id}-dates')">Datas</button>
-                                    <button class="tab" onclick="openTab(event, '{process_id}-storage')">Armazenagem</button>
+                                    <button class="tab" onclick="openTab(event, '{process_id}-storage')">{"Terminal de Exportação" if process.get('type', '') == "exportacao" else "Armazenagem"}</button>
                                     <button class="tab" onclick="openTab(event, '{process_id}-docs')">Documentos</button>
                                     <button class="tab" onclick="openTab(event, '{process_id}-events')">Eventos</button>
                                 </div>
                                 
                                 <div id="{process_id}-info" class="tabcontent" style="display: block;">
-                                    <h3>Informações Gerais</h3>
+                                    <h3>Informações Gerais - {"Exportação" if process.get('type', '') == "exportacao" else "Importação"}</h3>
                                     <div class="details-grid">
                                         <div class="details-item">
                                             <div class="details-label">Código</div>
@@ -716,8 +841,12 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                                             <div class="details-value">{process.get('product', '')}</div>
                                         </div>
                                         <div class="details-item">
-                                            <div class="details-label">Tipo</div>
+                                            <div class="details-label">Tipo de Processo</div>
                                             <div class="details-value">{"Exportação" if process.get('type', '') == "exportacao" else "Importação"}</div>
+                                        </div>
+                                        <div class="details-item">
+                                            <div class="details-label">Tipo de Carga</div>
+                                            <div class="details-value">{process.get('container_type', '')}</div>
                                         </div>
                                         <div class="details-item">
                                             <div class="details-label">ETA</div>
@@ -894,85 +1023,384 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
         </div>
         
         <script>
-            // Filtro de tabela
-            document.getElementById('filterInput').addEventListener('keyup', function() {
-                filterTable();
+            document.addEventListener('DOMContentLoaded', function() {
+                console.log("DOM carregado - iniciando setup");
+                
+                // Primeiro, verificamos se todos os elementos necessários estão presentes
+                const filterInput = document.getElementById('filterInput');
+                const processTypeFilter = document.getElementById('processTypeFilter');
+                const statusFilter = document.getElementById('statusFilter');
+                const table = document.getElementById('processesTable');
+                const statusContainer = document.getElementById('statusCounts');
+                
+                if (!filterInput || !processTypeFilter || !statusFilter || !table || !statusContainer) {
+                    console.error("Elementos críticos não encontrados:", {
+                        filterInput, processTypeFilter, statusFilter, table, statusContainer
+                    });
+                }
+                
+                // Adicionar event listeners para os filtros
+                if (filterInput) filterInput.addEventListener('keyup', filterTable);
+                if (processTypeFilter) processTypeFilter.addEventListener('change', filterTable);
+                if (statusFilter) statusFilter.addEventListener('change', filterTable);
+                
+                // Inicializar os filtros de status e contadores com atraso para garantir
+                // que a tabela esteja totalmente renderizada
+                setTimeout(function() {
+                    console.log("Iniciando filtros de status após atraso...");
+                    initStatusFilters();
+                    filterTable(); // Aplicar filtros iniciais
+                }, 200);
+                
+                // Inicializar responsividade
+                adjustTableForMobile();
+                window.addEventListener('resize', adjustTableForMobile);
             });
             
-            document.getElementById('processTypeFilter').addEventListener('change', function() {
+            // Inicializar os filtros de status e contadores
+            function initStatusFilters() {
+                console.log("Iniciando filtros de status");
+                const table = document.getElementById('processesTable');
+                if (!table) {
+                    console.error("Tabela de processos não encontrada");
+                    return;
+                }
+                
+                const rows = Array.from(table.querySelectorAll('tbody tr.process-row'));
+                console.log("Linhas encontradas:", rows.length);
+                
+                const statusSelect = document.getElementById('statusFilter');
+                const statusContainer = document.getElementById('statusCounts');
+                
+                if (!statusSelect || !statusContainer) {
+                    console.error("Elementos de filtro não encontrados", {statusSelect, statusContainer});
+                    return;
+                }
+                
+                // Debug: Verificar os atributos data-status das linhas
+                rows.forEach(row => {
+                    const rowStatus = row.getAttribute('data-status');
+                    const rowId = row.getAttribute('data-id');
+                    console.log(`Row ${rowId}: data-status="${rowStatus}"`);
+                });
+                
+                // Limpar opções existentes no select, mantendo apenas a opção 'todos'
+                while (statusSelect.options.length > 1) {
+                    statusSelect.remove(1);
+                }
+                
+                // Objeto para armazenar status e suas cores e contagens
+                const statusData = {};
+                
+                // Coletar todos os status existentes na tabela
+                rows.forEach(row => {
+                    if (!row) return;
+                    
+                    // Usar o atributo data-status para obter o status
+                    const status = row.getAttribute('data-status');
+                    if (!status) {
+                        console.log("Status não encontrado para a linha:", row);
+                        return;
+                    }
+                    
+                    // Ainda obtemos a cor do badge para manter a consistência visual
+                    const statusCell = row.cells[1]; // Coluna de status
+                    if (!statusCell) return;
+                    
+                    const statusBadge = statusCell.querySelector('.status-badge');
+                    if (!statusBadge) return;
+                    
+                    // Obter a cor real do elemento
+                    const computedStyle = window.getComputedStyle(statusBadge);
+                    const color = statusBadge.style.backgroundColor || computedStyle.backgroundColor;
+                    
+                    if (!statusData[status]) {
+                        statusData[status] = {
+                            count: 1,
+                            color: color
+                        };
+                        
+                        // Adicionar ao dropdown
+                        const option = document.createElement('option');
+                        option.value = status;
+                        option.textContent = status;
+                        statusSelect.appendChild(option);
+                    } else {
+                        statusData[status].count++;
+                    }
+                });
+                
+                console.log("Status encontrados:", Object.keys(statusData).length);
+                console.log("Dados de status:", statusData);
+                
+
+                
+                // Criar os contadores visuais
+                statusContainer.innerHTML = '';
+                
+                // Debug - para ver todos os status encontrados
+                console.log("Status encontrados para criar contadores:", Object.keys(statusData));
+                
+                for (const status in statusData) {
+                    if (!status || status === "") continue; // Ignorar status vazios
+                    
+                    const data = statusData[status];
+                    const count = data.count;
+                    const color = data.color || '#999';
+                    
+                    console.log(`Criando contador para ${status}: ${count} (cor: ${color})`);
+                    
+                    const item = document.createElement('div');
+                    item.className = 'status-count-item';
+                    
+                    // IMPORTANTE: Garantir que o atributo data-status seja definido corretamente
+                    item.setAttribute('data-status', status); // Atribuir o status para referência futura
+                    
+                    item.style.backgroundColor = color;
+                    item.innerHTML = `${status} <span class="status-count-badge">${count}</span>`;
+                    
+                    // Verificar se o atributo foi definido corretamente
+                    console.log(`Atributo data-status definido: ${item.getAttribute('data-status')}`);
+                    
+                    // Adicionar evento de clique para filtrar
+                    item.addEventListener('click', function() {
+                        console.log(`Clicou em status: ${status}`);
+                        statusSelect.value = status;
+                        filterTable();
+                    });
+                    
+                    statusContainer.appendChild(item);
+                }
+                
+                // Verificar se os contadores foram criados
+                const createdItems = statusContainer.querySelectorAll('.status-count-item');
+                console.log(`Foram criados ${createdItems.length} contadores de status`);
+                
+                // Filtrar inicialmente
                 filterTable();
-            });
+            }
             
+            // Função de filtragem da tabela
             function filterTable() {
+                console.log("Aplicando filtros à tabela");
                 const filterValue = document.getElementById('filterInput').value.toLowerCase();
                 const typeFilter = document.getElementById('processTypeFilter').value;
-                const table = document.getElementById('processesTable');
-                const rows = table.getElementsByClassName('process-row');
+                const statusFilter = document.getElementById('statusFilter').value;
                 
+                const table = document.getElementById('processesTable');
+                if (!table) {
+                    console.error("Tabela não encontrada na filtragem");
+                    return;
+                }
+                
+                // Obter todas as linhas de processos utilizando o seletor de classe
+                const rows = Array.from(table.querySelectorAll('tbody tr.process-row'));
+                console.log(`Filtrando ${rows.length} linhas`);
+                
+                // Objeto para contar status visíveis
+                const visibleStatusCounts = {};
+                
+                // Inicializar contadores com zero para cada status
+                // Buscamos pelos elementos diretamente do DOM
+                const statusItems = document.querySelectorAll('.status-count-item');
+                statusItems.forEach(item => {
+                    if (!item || !item.textContent) return;
+                    
+                    // Pegamos apenas o texto do status, sem o contador
+                    const statusParts = item.textContent.split(' ');
+                    if (statusParts.length > 0) {
+                        const status = statusParts[0].trim();
+                        visibleStatusCounts[status] = 0;
+                        console.log(`Inicializando contador para ${status}: 0`);
+                    }
+                });
+                
+                // Aplicar filtros a cada linha
                 for (let i = 0; i < rows.length; i++) {
                     const row = rows[i];
-                    const cells = row.getElementsByTagName('td');
-                    const processType = row.getAttribute('data-type') || '';
-                    let matchesText = false;
+                    if (!row || !row.cells) continue;
                     
-                    // Verificar se corresponde ao texto de busca
+                    const cells = row.cells;
+                    const processId = row.getAttribute('data-id');
+                    const processType = row.getAttribute('data-type') || '';
+                    
+                    // Verificar filtro de texto
+                    let matchesText = false;
                     for (let j = 0; j < cells.length; j++) {
-                        const cell = cells[j];
-                        if (cell.textContent.toLowerCase().indexOf(filterValue) > -1) {
+                        if (!cells[j]) continue;
+                        
+                        const cellText = cells[j].textContent.toLowerCase();
+                        if (cellText.includes(filterValue)) {
                             matchesText = true;
                             break;
                         }
                     }
                     
-                    // Verificar se corresponde ao tipo de processo
+                    // Verificar filtro de tipo de processo
                     let matchesType = true;
                     if (typeFilter !== 'todos') {
-                        matchesType = (processType === typeFilter);
-                        
-                        // Processos de importação podem não ter o tipo definido (legado)
-                        if (typeFilter === 'importacao' && processType === '') {
-                            matchesType = true;
+                        matchesType = (processType === typeFilter) || 
+                                    (typeFilter === 'importacao' && processType === '');
+                    }
+                    
+                    // Verificar filtro de status
+                    let matchesStatus = true;
+                    if (statusFilter !== 'todos') {
+                        const rowStatus = row.getAttribute('data-status');
+                        matchesStatus = (rowStatus === statusFilter);
+                        console.log(`Row ${row.getAttribute('data-id')}: status=${rowStatus}, filter=${statusFilter}, matches=${matchesStatus}`);
+                    }
+                    
+                    // Aplicar visibilidade
+                    const isVisible = matchesText && matchesType && matchesStatus;
+                    row.style.display = isVisible ? '' : 'none';
+                    
+                    // Fechar detalhes se a linha for ocultada
+                    if (processId) {
+                        const detailsRow = document.getElementById('details-' + processId);
+                        if (detailsRow) {
+                            if (!isVisible) {
+                                detailsRow.style.display = 'none';
+                                row.classList.remove('active');
+                            }
                         }
                     }
                     
-                    // Mostrar apenas se corresponder a ambos os filtros
-                    if (matchesText && matchesType) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
-                        // Esconder também a linha de detalhes
-                        const processId = row.getAttribute('data-id');
-                        const detailsRow = document.getElementById('details-' + processId);
-                        if (detailsRow) {
-                            detailsRow.style.display = 'none';
+                    // Atualizar contadores de status visíveis
+                    if (isVisible) {
+                        // Método 3 (mais confiável): Usar o atributo data-status
+                        const status = row.getAttribute('data-status');
+                        
+                        // Se encontramos um status, incrementamos o contador
+                        if (status && status.length > 0) {
+                            console.log(`Incrementando contador para status: ${status}`);
+                            visibleStatusCounts[status] = (visibleStatusCounts[status] || 0) + 1;
                         }
                     }
                 }
+                
+                // Atualizar os contadores visuais
+                console.log("Status visíveis:", visibleStatusCounts);
+                
+                // Atualizar os contadores no DOM
+                statusItems.forEach(item => {
+                    if (!item) return;
+                    
+                    // Obter o status a partir do atributo data-status
+                    const statusText = item.getAttribute('data-status');
+                    if (!statusText) {
+                        console.error("Item sem atributo data-status:", item);
+                        return;
+                    }
+                    
+                    console.log(`Atualizando badge para: ${statusText}`);
+                    
+                    // Encontrar o elemento de contador
+                    const badge = item.querySelector('.status-count-badge');
+                    if (badge) {
+                        // CORREÇÃO: Precisamos contar novamente os processos com este status
+                        // quando filtros de texto ou tipo são aplicados
+                        if (statusFilter !== 'todos' && statusFilter !== statusText) {
+                            // Se um filtro de status específico está aplicado e não é este status,
+                            // mostramos 0 (pois todos os outros status estão filtrados)
+                            badge.textContent = '0';
+                            item.style.opacity = '0.6';
+                        } else {
+                            // Contamos diretamente do DOM para maior precisão
+                            let count = 0;
+                            
+                            if (filterValue === '' && typeFilter === 'todos') {
+                                // Se não há outros filtros, usamos o valor pré-calculado
+                                count = visibleStatusCounts[statusText] || 0;
+                            } else {
+                                // Se há outros filtros, contamos os processos visíveis com este status
+                                rows.forEach(row => {
+                                    if (row.style.display !== 'none' && 
+                                        row.getAttribute('data-status') === statusText) {
+                                        count++;
+                                    }
+                                });
+                            }
+                            
+                            badge.textContent = count.toString();
+                            console.log(`  - Nova contagem para ${statusText}: ${count}`);
+                            
+                            // Destacar visualmente status com zero processos
+                            if (count === 0) {
+                                item.style.opacity = '0.6';
+                            } else {
+                                item.style.opacity = '1';
+                            }
+                        }
+                    } else {
+                        console.error(`  - Badge não encontrado para ${statusText}`);
+                    }
+                    
+                    // Destacar o status selecionado
+                    if (statusText === statusFilter) {
+                        item.style.border = '2px solid #333';
+                        item.style.transform = 'translateY(-2px)';
+                        item.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.15)';
+                    } else {
+                        item.style.border = 'none';
+                        item.style.transform = 'none';
+                        item.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+                    }
+                });
             }
-            
-            // Variável para rastrear o processo atualmente aberto
-            let currentOpenProcess = null;
             
             // Expandir/colapsar detalhes
             function toggleDetails(processId) {
+                const row = document.querySelector(`tr[data-id="${processId}"]`);
                 const detailsRow = document.getElementById('details-' + processId);
                 
-                // Se o processo já está aberto, apenas fecha
-                if (detailsRow.style.display === 'table-row') {
+                if (!detailsRow) {
+                    console.error('Details row not found for process:', processId);
+                    return;
+                }
+                
+                // Verificar estado atual
+                const isVisible = detailsRow.style.display === 'table-row';
+                
+                // Primeiro, fechar todos os detalhes abertos
+                const allDetailRows = document.querySelectorAll('tr[id^="details-"]');
+                const allProcessRows = document.querySelectorAll('tr.process-row');
+                
+                // Fechar todos os outros detalhes
+                allDetailRows.forEach(row => {
+                    row.style.display = 'none';
+                });
+                
+                // Remover classe 'active' de todas as linhas de processo
+                allProcessRows.forEach(prow => {
+                    prow.classList.remove('active');
+                });
+                
+                // Fechar detalhes se estiver aberto (toggle)
+                if (isVisible) {
                     detailsRow.style.display = 'none';
-                    currentOpenProcess = null;
+                    if (row) row.classList.remove('active');
                 } else {
-                    // Fecha o processo atualmente aberto (se houver)
-                    if (currentOpenProcess !== null && currentOpenProcess !== processId) {
-                        const currentOpenRow = document.getElementById('details-' + currentOpenProcess);
-                        if (currentOpenRow) {
-                            currentOpenRow.style.display = 'none';
-                        }
-                    }
-                    
-                    // Abre o novo processo
+                    // Abrir detalhes do processo atual
                     detailsRow.style.display = 'table-row';
-                    currentOpenProcess = processId;
+                    if (row) row.classList.add('active');
+                    
+                    // Ativar a primeira aba por padrão
+                    const firstTab = detailsRow.querySelector('.tab');
+                    const firstContent = detailsRow.querySelector('.tabcontent');
+                    
+                    if (firstTab && firstContent) {
+                        // Desativar todas as abas e conteúdos
+                        const allTabs = detailsRow.querySelectorAll('.tab');
+                        const allContents = detailsRow.querySelectorAll('.tabcontent');
+                        
+                        allTabs.forEach(tab => tab.classList.remove('active'));
+                        allContents.forEach(content => content.style.display = 'none');
+                        
+                        // Ativar a primeira aba
+                        firstTab.classList.add('active');
+                        firstContent.style.display = 'block';
+                    }
                 }
             }
             
@@ -996,8 +1424,13 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                 }
                 
                 // Mostrar a aba selecionada
-                document.getElementById(tabId).style.display = 'block';
-                evt.currentTarget.className += ' active';
+                const selectedTab = document.getElementById(tabId);
+                if (selectedTab) {
+                    selectedTab.style.display = 'block';
+                    evt.currentTarget.className += ' active';
+                } else {
+                    console.error('Tab content not found:', tabId);
+                }
             }
             
             // Ordenação da tabela

@@ -104,12 +104,31 @@ def load_data():
         else:
             data = DEFAULT_DATA
             
-        # Garantir que todos os eventos tenham IDs únicos
+        # Garantir que todos os processos tenham campos necessários
         for process in data["processes"]:
+            # Garantir que todos os eventos tenham IDs únicos
             if "events" in process:
-                for event in process["events"]:
-                    if "id" not in event:
-                        event["id"] = str(uuid.uuid4())
+                # Realizar a verificação em dois passos para evitar erros de iteração
+                events_to_update = []
+                for i, event in enumerate(process["events"]):
+                    if "id" not in event or event["id"] is None or event["id"] == "":
+                        events_to_update.append(i)
+                
+                # Adicionar IDs aos eventos que não têm
+                for i in events_to_update:
+                    process["events"][i]["id"] = str(uuid.uuid4())
+                    print(f"ID gerado para evento {i} do processo {process['id']}: {process['events'][i]['id']}")
+            
+            # Garantir que exista o campo 'type' (para compatibilidade)
+            if "type" not in process:
+                process["type"] = "importacao"  # Valor padrão
+            
+            # Para registros antigos, converter 'type' do tipo de carga para tipo de processo
+            if process.get("type") in ["FCL 1 X 40", "FCL 1 X 20", "LCL"]:
+                # Guardar o tipo de container/carga em outro campo
+                process["container_type"] = process["type"]
+                # Definir o tipo de processo como importação (valor padrão)
+                process["type"] = "importacao"
         
         return data
     except Exception as e:
@@ -187,12 +206,19 @@ def add_event(process_id, description, user=None):
         if process["id"] == process_id:
             # Gerar um ID único para o evento
             event_id = str(uuid.uuid4())
-            process["events"].append({
+            new_event = {
                 "id": event_id,
                 "date": datetime.now().strftime("%d/%m/%Y"),
                 "description": description,
                 "user": user
-            })
+            }
+            print(f"Adicionando evento com ID {event_id} ao processo {process_id}")
+            
+            # Inicializar a lista de eventos se não existir
+            if "events" not in process:
+                process["events"] = []
+                
+            process["events"].append(new_event)
             process["last_update"] = datetime.now().strftime("%d/%m/%Y")
             save_data(st.session_state.data)
             return True
@@ -200,26 +226,76 @@ def add_event(process_id, description, user=None):
 
 def edit_event(process_id, event_id, new_description):
     """Edit an existing event"""
+    print(f"Tentando editar evento: process_id={process_id}, event_id={event_id}, nova descrição={new_description}")
     for process in st.session_state.data["processes"]:
         if process["id"] == process_id:
-            for event in process["events"]:
-                if event.get("id") == event_id:
+            # Debug: listar todos os eventos neste processo para diagnóstico
+            print(f"Processo {process_id} encontrado, procurando evento {event_id}")
+            for i, event in enumerate(process.get("events", [])):
+                print(f"  Evento {i}: id={event.get('id')}, description={event.get('description')}")
+                
+                # Verificar se o ID do evento corresponde
+                current_id = event.get("id")
+                if current_id == event_id:
+                    print(f"  Evento {event_id} encontrado! Atualizando descrição...")
                     event["description"] = new_description
                     process["last_update"] = datetime.now().strftime("%d/%m/%Y")
                     save_data(st.session_state.data)
                     return True
+                
+                # Verificação alternativa para índices como chaves
+                if current_id is None and event_id.startswith("event_"):
+                    try:
+                        # Se event_id é algo como "event_3", extrair o índice
+                        idx = int(event_id.split("_")[1])
+                        if idx == i:
+                            print(f"  Correspondência por índice {idx}! Atualizando descrição...")
+                            event["description"] = new_description
+                            # Adicionar um ID ao evento para referência futura
+                            event["id"] = str(uuid.uuid4())
+                            process["last_update"] = datetime.now().strftime("%d/%m/%Y")
+                            save_data(st.session_state.data)
+                            return True
+                    except (ValueError, IndexError):
+                        pass
+    
+    print(f"Evento não encontrado para edição")
     return False
 
 def delete_event(process_id, event_id):
     """Delete an event from a process"""
+    print(f"Tentando excluir evento: process_id={process_id}, event_id={event_id}")
     for process in st.session_state.data["processes"]:
         if process["id"] == process_id:
-            for i, event in enumerate(process["events"]):
-                if event.get("id") == event_id:
+            # Debug: listar todos os eventos neste processo para diagnóstico
+            print(f"Processo {process_id} encontrado, procurando evento {event_id}")
+            for i, event in enumerate(process.get("events", [])):
+                print(f"  Evento {i}: id={event.get('id')}, description={event.get('description')}")
+                
+                # Verificar se o ID do evento corresponde
+                current_id = event.get("id")
+                if current_id == event_id:
+                    print(f"  Evento {event_id} encontrado! Excluindo...")
                     del process["events"][i]
                     process["last_update"] = datetime.now().strftime("%d/%m/%Y")
                     save_data(st.session_state.data)
                     return True
+                
+                # Verificação alternativa para índices como chaves
+                if current_id is None and event_id.startswith("event_"):
+                    try:
+                        # Se event_id é algo como "event_3", extrair o índice
+                        idx = int(event_id.split("_")[1])
+                        if idx == i:
+                            print(f"  Correspondência por índice {idx}! Excluindo...")
+                            del process["events"][i]
+                            process["last_update"] = datetime.now().strftime("%d/%m/%Y")
+                            save_data(st.session_state.data)
+                            return True
+                    except (ValueError, IndexError):
+                        pass
+    
+    print(f"Evento não encontrado para exclusão")
     return False
 
 def generate_process_id():

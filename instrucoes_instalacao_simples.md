@@ -1,6 +1,8 @@
 # Instruções para Instalação e Uso do JGR Broker Importação
 
-Este é um guia simplificado para instalar e executar o sistema JGR Broker Importação em um computador Windows sem a necessidade de conhecimentos técnicos.
+Este é um guia simplificado para instalar e executar o sistema JGR Broker Importação em um computador Windows sem a necessidade de conhecimentos técnicos avançados.
+
+> **IMPORTANTE**: Como não é possível baixar o executável diretamente do Replit, este guia explica como instalar manualmente o sistema utilizando Python. Para criar o executável, siga as instruções no arquivo `instrucoes_criar_executavel.md`.
 
 ## Requisitos Mínimos
 
@@ -47,7 +49,7 @@ Este é um guia simplificado para instalar e executar o sistema JGR Broker Impor
 
 5. Execute o aplicativo:
    ```
-   streamlit run app.py
+   streamlit run app.py --server.port 5000 --server.address 0.0.0.0
    ```
 
 6. Um navegador será aberto automaticamente com o sistema
@@ -69,7 +71,7 @@ Para iniciar o sistema nas próximas vezes:
    ```
 3. Execute o comando:
    ```
-   streamlit run app.py
+   streamlit run app.py --server.port 5000 --server.address 0.0.0.0
    ```
 
 ## Usando o Atalho para Facilitar o Acesso
@@ -85,8 +87,8 @@ O arquivo contém as seguintes instruções:
 @echo off
 cd /d "%~dp0"
 echo Iniciando JGR Broker Importacao...
-start "" "http://localhost:5000"
-streamlit run app.py
+streamlit run app.py --server.port 5000 --server.address 0.0.0.0
+REM O navegador será aberto automaticamente pelo Streamlit
 ```
 
 ## Importante

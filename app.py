@@ -13,6 +13,7 @@ from components.settings import display_settings
 from components.auth import display_login, display_user_management, init_auth_state, logout
 from data import load_data, save_data
 from assets.stock_photos import get_random_image
+import sheets_to_html
 
 # Page configuration
 st.set_page_config(
@@ -117,7 +118,7 @@ if st.session_state.user_role == "admin":
         if st.button("🔗 Compartilhar", use_container_width=True):
             navigate_to("share")
     with nav_col4:
-        if st.button("📊 Relatórios", use_container_width=True):
+        if st.button("📊 Importar Planilha", use_container_width=True):
             navigate_to("reports")
     with nav_col5:
         if st.button("⚙️ Configurações", use_container_width=True):
@@ -163,8 +164,15 @@ elif st.session_state.current_page == "share":
 elif st.session_state.current_page == "reports":
     # Somente admin pode acessar relatórios
     if st.session_state.user_role == 'admin':
-        st.header("Relatórios")
-        st.info("Funcionalidade de relatórios será implementada em uma versão futura.")
+        st.header("Importação de Planilha")
+        
+        tab1, tab2 = st.tabs(["Converter Planilha", "Baixar Modelo"])
+        
+        with tab1:
+            sheets_to_html.convert_sheet_to_html()
+        
+        with tab2:
+            sheets_to_html.create_template_file()
     else:
         st.error("Você não tem permissão para acessar esta página.")
         navigate_to("home")

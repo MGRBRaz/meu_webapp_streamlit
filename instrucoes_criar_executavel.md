@@ -2,6 +2,8 @@
 
 Este documento apresenta o passo a passo para gerar um executável do sistema JGR Broker Importação que pode ser usado em qualquer computador Windows sem necessidade de instalação de Python ou outras dependências.
 
+> **IMPORTANTE:** Esta etapa deve ser realizada em um computador Windows com Python instalado corretamente. O executável resultante poderá então ser distribuído para outros computadores sem Python.
+
 ## Pré-requisitos
 
 Para gerar o executável, você precisará de:
@@ -37,13 +39,13 @@ Para distribuir o sistema para uso em outros computadores:
 
 1. Copie toda a pasta `dist` para um pen drive ou outro meio de transferência
 2. No computador de destino, copie a pasta para o local desejado (por exemplo, na área de trabalho ou em "Meus Documentos")
-3. O usuário final não precisa instalar nada, basta executar o arquivo `Start_JGR_Broker.bat` que está dentro da pasta
+3. O usuário final não precisa instalar nada, basta executar o arquivo `JGRBrokerImportacao.exe` ou usar o `iniciar_jgr.bat` que está dentro da pasta
 
 ### 4. Uso do Sistema
 
 Para iniciar o sistema:
 
-1. Execute o arquivo `Start_JGR_Broker.bat`
+1. Execute o arquivo `JGRBrokerImportacao.exe` ou `iniciar_jgr.bat`
 2. Automaticamente será aberto um navegador com o sistema
 3. Faça login com as credenciais:
    - Usuário: `admin`
