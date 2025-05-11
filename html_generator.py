@@ -415,7 +415,7 @@ def generate_process_html(process_id, include_details=True):
     return filepath, filename
 
 
-def generate_processes_table_html(filtered_df=None, process_ids=None, include_details=True, client_filter=None, client_name=None):
+def generate_processes_table_html(filtered_df=None, process_ids=None, include_details=True, client_filter=None, client_name=None, archived=False):
     """
     Gera um arquivo HTML contendo uma tabela de processos com funcionalidade de expansão de detalhes.
     
@@ -425,6 +425,7 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
         include_details: Se True, inclui a seção de detalhes
         client_filter: ID do cliente para filtrar processos (opcional)
         client_name: Nome do cliente para personalizar o relatório (opcional)
+        archived: Se True, indica que estamos gerando relatório para processos arquivados
         
     Returns:
         tuple: (caminho do arquivo gerado, URL relativo)
@@ -464,13 +465,16 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
     elif client_filter:
         client_suffix = f"_cliente_{client_filter}"
         
-    filename = f"processos{client_suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+    # Adicionar indicação de processos arquivados no nome do arquivo
+    archived_suffix = "_arquivados" if archived else ""
+    filename = f"processos{client_suffix}{archived_suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
     filepath = os.path.join(HTML_EXPORTS_DIR, filename)
     
-    # Título personalizado com nome do cliente, se fornecido
-    title = "Processos de Importação e Exportação - JGR Broker"
+    # Título personalizado com nome do cliente e indicador de arquivamento, se aplicável
+    archived_title = "Arquivados" if archived else ""
+    title = f"Processos de Importação e Exportação {archived_title} - JGR Broker"
     if client_name:
-        title = f"Processos de Importação e Exportação - Cliente: {client_name} - JGR Broker"
+        title = f"Processos de Importação e Exportação {archived_title} - Cliente: {client_name} - JGR Broker"
     
     # Criar HTML com estilos e scripts
     html = f"""

@@ -123,6 +123,10 @@ def load_data():
             if "type" not in process:
                 process["type"] = "importacao"  # Valor padrão
             
+            # Garantir que exista o campo 'archived' (para funcionalidade de arquivamento)
+            if "archived" not in process:
+                process["archived"] = False
+            
             # Para registros antigos, converter 'type' do tipo de carga para tipo de processo
             if process.get("type") in ["FCL 1 X 40", "FCL 1 X 20", "LCL"]:
                 # Guardar o tipo de container/carga em outro campo
@@ -309,12 +313,76 @@ def generate_process_id():
     next_num = int(max_id[4:]) + 1
     return f"{year}{next_num:04d}"
 
-def get_processes_df():
-    """Convert processes to a DataFrame for display"""
+def archive_process(process_id):
+    """Arquivar um processo pelo ID"""
+    for i, process in enumerate(st.session_state.data["processes"]):
+        if process["id"] == process_id:
+            st.session_state.data["processes"][i]["archived"] = True
+            
+            # Adicionar evento de arquivamento
+            now = datetime.now().strftime("%d/%m/%Y")
+            event_id = str(uuid.uuid4())
+            
+            if "events" not in st.session_state.data["processes"][i]:
+                st.session_state.data["processes"][i]["events"] = []
+                
+            st.session_state.data["processes"][i]["events"].append({
+                "id": event_id,
+                "date": now,
+                "description": "Processo arquivado",
+                "user": st.session_state.get('username', 'Admin')
+            })
+            
+            st.session_state.data["processes"][i]["last_update"] = now
+            save_data(st.session_state.data)
+            return True
+    return False
+
+def unarchive_process(process_id):
+    """Desarquivar um processo pelo ID"""
+    for i, process in enumerate(st.session_state.data["processes"]):
+        if process["id"] == process_id:
+            st.session_state.data["processes"][i]["archived"] = False
+            
+            # Adicionar evento de desarquivamento
+            now = datetime.now().strftime("%d/%m/%Y")
+            event_id = str(uuid.uuid4())
+            
+            if "events" not in st.session_state.data["processes"][i]:
+                st.session_state.data["processes"][i]["events"] = []
+                
+            st.session_state.data["processes"][i]["events"].append({
+                "id": event_id,
+                "date": now,
+                "description": "Processo reativado",
+                "user": st.session_state.get('username', 'Admin')
+            })
+            
+            st.session_state.data["processes"][i]["last_update"] = now
+            save_data(st.session_state.data)
+            return True
+    return False
+
+def get_processes_df(include_archived=False):
+    """Convert processes to a DataFrame for display
+    
+    Args:
+        include_archived: Se True, inclui processos arquivados. Se False (padrão), exclui arquivados.
+    """
     if not st.session_state.data["processes"]:
         return pd.DataFrame()
     
-    df = pd.DataFrame(st.session_state.data["processes"])
+    # Filtrar processos de acordo com o status de arquivamento
+    filtered_processes = []
+    for process in st.session_state.data["processes"]:
+        is_archived = process.get("archived", False)
+        if (include_archived and is_archived) or (not include_archived and not is_archived):
+            filtered_processes.append(process)
+    
+    if not filtered_processes:
+        return pd.DataFrame()
+        
+    df = pd.DataFrame(filtered_processes)
     
     # Atualizar os dias armazenados para todos os processos
     for i, process in enumerate(st.session_state.data["processes"]):
@@ -328,7 +396,7 @@ def get_processes_df():
                 pass
     
     # Atualizar o DataFrame
-    df = pd.DataFrame(st.session_state.data["processes"])
+    df = pd.DataFrame(filtered_processes)
     
     # Select columns for main table view (removido "id" conforme solicitado)
     display_columns = [

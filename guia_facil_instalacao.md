@@ -1,37 +1,83 @@
-# Guia Simplificado para Instalação do JGR Broker
+# Guia Simplificado de Instalação na Hostinger (Docker)
 
-Este guia apresenta uma forma simplificada para começar a usar o sistema JGR Broker Importação em um computador Windows.
+Este é um guia passo a passo simplificado para instalar o JGR Broker Import na Hostinger usando Docker.
 
-## Opção 1: Instalação Manual (Mais Simples)
+## Preparação dos Arquivos (No seu computador)
 
-Esta opção é recomendada para quem não tem experiência técnica e precisa começar a usar o sistema rapidamente.
+1. **Crie uma pasta** chamada `jgr_deploy`
 
-### Passo 1: Instalar o Python
-1. Baixe o Python 3.11 (ou versão mais recente) em: https://www.python.org/downloads/
-2. Durante a instalação, marque a opção "Add Python to PATH"
-3. Clique em "Install Now"
+2. **Copie os seguintes arquivos e pastas** para a pasta `jgr_deploy`:
+   - Todos os arquivos `.py` do projeto
+   - Pasta `components`
+   - Pasta `assets`
+   - Pasta `.streamlit`
+   - Arquivos `data.json` e `users.json`
+   - Arquivos `Dockerfile` e `docker-compose.yml` (criados anteriormente)
+   - Arquivo `required_packages.txt`
 
-### Passo 2: Instalar o JGR Broker
-1. Baixe o projeto completo do Replit (clique nos três pontos no canto superior direito e escolha "Download as zip")
-2. Extraia o arquivo zip para uma pasta no seu computador
-3. Na pasta extraída, dê um duplo-clique no arquivo `iniciar_jgr.bat`
-4. Aguarde o sistema iniciar (pode demorar alguns segundos na primeira vez)
-5. Use as credenciais para login:
-   - Usuário: `admin`
-   - Senha: `admin`
+3. **Compacte a pasta** `jgr_deploy` em um arquivo ZIP
 
-## Opção 2: Criação de Executável (Recomendado para distribução)
+## Instalação (Na Hostinger)
 
-Esta opção é mais complexa para configurar inicialmente, mas permite distribuir o sistema como um programa executável para outros usuários sem precisar instalar Python neles.
+1. **Acesse o painel da Hostinger** e navegue até seu servidor Docker
 
-1. Configure um computador com Python seguindo as instruções da Opção 1
-2. Siga as instruções detalhadas no arquivo `instrucoes_criar_executavel.md`
-3. Distribua o executável gerado para os computadores onde o sistema será usado
+2. **Acesse o gerenciador de arquivos**:
+   - Vá para "File Manager" ou similar no painel da Hostinger
+   - Navegue até a pasta raiz (geralmente `/public_html`)
 
-## Suporte
+3. **Faça upload do ZIP**:
+   - Selecione "Upload" e escolha o arquivo ZIP criado
+   - Depois de concluído, extraia o ZIP no servidor
 
-Se encontrar dificuldades, consulte os documentos mais detalhados:
-- `instrucoes_instalacao_simples.md` - Para instalação manual completa
-- `instrucoes_criar_executavel.md` - Para criar o executável
+4. **Acesse o Terminal** (clique no botão "Terminal do navegador" no canto superior direito)
 
-Em caso de problemas persistentes, entre em contato com o suporte técnico.
+5. **Execute os comandos**:
+   ```bash
+   # Vá para a pasta onde os arquivos foram extraídos
+   cd /public_html
+   
+   # Renomeie o arquivo de requisitos
+   mv required_packages.txt requirements.txt
+   
+   # Construa e inicie o contêiner Docker
+   docker-compose build
+   docker-compose up -d
+   ```
+
+6. **Verifique se está funcionando**:
+   ```bash
+   # Veja se o contêiner está rodando
+   docker ps
+   
+   # Veja os logs em caso de problemas
+   docker-compose logs
+   ```
+
+7. **Configure o acesso**:
+   - No painel da Hostinger, vá para "Regras do Firewall"
+   - Adicione regra para permitir tráfego na porta 8501
+   - Acesse sua aplicação em: `http://seu_dominio.com:8501`
+
+## Solução Rápida de Problemas
+
+- **App não inicia**: Verifique logs com `docker-compose logs`
+- **Problemas de permissão**: Execute `chmod 666 data.json users.json`
+- **Não consegue acessar via navegador**: Verifique se porta 8501 está aberta no firewall
+
+## Comandos Úteis
+
+- **Ver logs**: `docker-compose logs -f`
+- **Reiniciar app**: `docker-compose restart`
+- **Parar app**: `docker-compose down`
+- **Atualizar após mudanças**: 
+  ```bash
+  docker-compose down
+  docker-compose build
+  docker-compose up -d
+  ```
+
+## Dicas Extras
+
+- Faça backup regular dos arquivos `data.json` e `users.json`
+- Para atualizar a aplicação, substitua apenas os arquivos alterados e reinicie o contêiner
+- Use o comando `docker-compose down && docker-compose up -d` para reiniciar completamente
