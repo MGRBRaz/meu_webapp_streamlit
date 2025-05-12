@@ -11,7 +11,6 @@ from components.client_view import display_client_view
 from components.share import display_share_interface, validate_share_token
 from components.settings import display_settings
 from components.auth import display_login, display_user_management, init_auth_state, logout
-from components.archived import display_archived_processes
 from data import load_data, save_data
 from assets.stock_photos import get_random_image
 import sheets_to_html
@@ -107,7 +106,7 @@ with col3:
 
 # Navigation bar - Mostra todos os botões para administradores
 if st.session_state.user_role == "admin":
-    nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6, nav_col7 = st.columns(7)
+    nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6 = st.columns(6)
     with nav_col1:
         if st.button("📋 Painel", use_container_width=True):
             navigate_to("home")
@@ -116,18 +115,15 @@ if st.session_state.user_role == "admin":
             st.session_state.edit_mode = False
             navigate_to("add_edit")
     with nav_col3:
-        if st.button("📦 Arquivados", use_container_width=True):
-            navigate_to("archived")
-    with nav_col4:
         if st.button("🔗 Compartilhar", use_container_width=True):
             navigate_to("share")
-    with nav_col5:
+    with nav_col4:
         if st.button("📊 Importar Planilha", use_container_width=True):
             navigate_to("reports")
-    with nav_col6:
+    with nav_col5:
         if st.button("⚙️ Configurações", use_container_width=True):
             navigate_to("settings")
-    with nav_col7:
+    with nav_col6:
         if st.button("👥 Usuários", use_container_width=True):
             navigate_to("users")
 else:
@@ -191,13 +187,6 @@ elif st.session_state.current_page == "users":
     # Somente admin pode gerenciar usuários
     if st.session_state.user_role == 'admin':
         display_user_management()
-    else:
-        st.error("Você não tem permissão para acessar esta página.")
-        navigate_to("home")
-elif st.session_state.current_page == "archived":
-    # Somente admin pode ver processos arquivados
-    if st.session_state.user_role == 'admin':
-        display_archived_processes(navigate_to)
     else:
         st.error("Você não tem permissão para acessar esta página.")
         navigate_to("home")
