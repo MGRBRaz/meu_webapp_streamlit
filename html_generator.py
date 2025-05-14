@@ -36,6 +36,9 @@ def generate_process_html(process_id, include_details=True):
     # Status
     status = process.get('status', 'Em andamento')
     status_color = get_status_color(status)
+    # Garante que status não é None para usar upper()
+    if status is None:
+        status = ""
     
     # Criar HTML
     html = f"""
@@ -65,16 +68,25 @@ def generate_process_html(process_id, include_details=True):
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 20px;
+                border-radius: 4px;
+                overflow: hidden; /* Para garantir que as bordas arredondadas funcionem */
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08); /* Sombra muito sutil na tabela inteira */
                 border-bottom: 1px solid #eee;
                 padding-bottom: 10px;
             }}
             .status-badge {{
                 background-color: {status_color};
                 color: white;
-                padding: 5px 15px;
-                border-radius: 20px;
+                padding: 6px 15px;
+                border-radius: 50px;
                 font-weight: bold;
                 display: inline-block;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+                text-align: center;
+                width: 110px;
+                font-size: 0.9em;
+                letter-spacing: 0.5px;
+                text-transform: uppercase;
             }}
             /* Estilo para os contadores de status */
             .status-counts-container {{
@@ -84,24 +96,34 @@ def generate_process_html(process_id, include_details=True):
                 margin-bottom: 15px;
             }}
             .status-count-item {{
-                padding: 5px 10px;
-                border-radius: 15px;
+                padding: 6px 15px;
+                border-radius: 20px;
                 font-size: 0.9em;
                 display: flex;
                 align-items: center;
+                justify-content: space-between;
                 cursor: pointer;
                 color: white;
+                width: 120px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                transition: all 0.2s ease;
+                margin: 2px;
+            }}
+            
+            .status-count-item:hover {{
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
             }}
             .status-count-badge {{
-                background: rgba(255,255,255,0.7);
-                border-radius: 50%;
-                width: 22px;
-                height: 22px;
+                background: rgba(255,255,255,0.3);
+                padding: 2px 8px;
+                border-radius: 12px;
                 text-align: center;
-                line-height: 22px;
                 margin-left: 8px;
+                display: inline-block;
+                color: white;
                 font-weight: bold;
-                color: #333;
+                font-size: 0.85em;
             }}
             .section {{
                 margin-bottom: 30px;
@@ -150,6 +172,9 @@ def generate_process_html(process_id, include_details=True):
                 width: 100%;
                 border-collapse: collapse;
                 margin-bottom: 20px;
+                border-radius: 4px;
+                overflow: hidden; /* Para garantir que as bordas arredondadas funcionem */
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08); /* Sombra muito sutil na tabela inteira */
             }}
             table th, table td {{
                 padding: 8px 10px;
@@ -186,7 +211,7 @@ def generate_process_html(process_id, include_details=True):
                     <p>Referência: {process.get('ref', '')}</p>
                 </div>
                 <div>
-                    <div class="status-badge">{status}</div>
+                    <div class="status-badge">{status.upper() if status else ''}</div>
                 </div>
             </div>
     """
@@ -415,7 +440,7 @@ def generate_process_html(process_id, include_details=True):
     return filepath, filename
 
 
-def generate_processes_table_html(filtered_df=None, process_ids=None, include_details=True, client_filter=None, client_name=None):
+def generate_processes_table_html(filtered_df=None, process_ids=None, include_details=True, client_filter=None, client_name=None, archived=False):
     """
     Gera um arquivo HTML contendo uma tabela de processos com funcionalidade de expansão de detalhes.
     
@@ -425,6 +450,7 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
         include_details: Se True, inclui a seção de detalhes
         client_filter: ID do cliente para filtrar processos (opcional)
         client_name: Nome do cliente para personalizar o relatório (opcional)
+        archived: Se True, indica que estamos gerando relatório para processos arquivados
         
     Returns:
         tuple: (caminho do arquivo gerado, URL relativo)
@@ -464,13 +490,16 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
     elif client_filter:
         client_suffix = f"_cliente_{client_filter}"
         
-    filename = f"processos{client_suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+    # Adicionar indicação de processos arquivados no nome do arquivo
+    archived_suffix = "_arquivados" if archived else ""
+    filename = f"processos{client_suffix}{archived_suffix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
     filepath = os.path.join(HTML_EXPORTS_DIR, filename)
     
-    # Título personalizado com nome do cliente, se fornecido
-    title = "Processos de Importação e Exportação - JGR Broker"
+    # Título personalizado com nome do cliente e indicador de arquivamento, se aplicável
+    archived_title = "Arquivados" if archived else ""
+    title = f"Processos de Importação e Exportação {archived_title} - JGR Broker"
     if client_name:
-        title = f"Processos de Importação e Exportação - Cliente: {client_name} - JGR Broker"
+        title = f"Processos de Importação e Exportação {archived_title} - Cliente: {client_name} - JGR Broker"
     
     # Criar HTML com estilos e scripts
     html = f"""
@@ -500,6 +529,9 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                 justify-content: space-between;
                 align-items: center;
                 margin-bottom: 20px;
+                border-radius: 4px;
+                overflow: hidden; /* Para garantir que as bordas arredondadas funcionem */
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08); /* Sombra muito sutil na tabela inteira */
                 border-bottom: 1px solid #eee;
                 padding-bottom: 10px;
             }}
@@ -539,19 +571,19 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                 align-items: center;
                 justify-content: space-between;
                 padding: 8px 15px;
-                border-radius: 20px;
+                border-radius: 50px;
                 color: white;
                 font-size: 0.85rem;
                 font-weight: bold;
                 cursor: pointer;
                 min-width: 130px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
                 transition: all 0.2s ease;
             }}
             
             .status-count-item:hover {{
                 transform: translateY(-2px);
-                box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+                box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
             }}
             
             .status-count-badge {{
@@ -574,15 +606,28 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
             }}
             .status-badge {{
                 color: white;
-                padding: 5px 15px;
-                border-radius: 20px;
+                padding: 4px 12px;
+                border-radius: 50px;
                 font-weight: bold;
                 display: inline-block;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+                font-size: 0.75em;
+                letter-spacing: 0.3px;
+                min-width: 40px;
+                max-width: 100%;
+                text-align: center;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                line-height: 1.5;
             }}
             table {{
                 width: 100%;
                 border-collapse: collapse;
                 margin-bottom: 20px;
+                border-radius: 4px;
+                overflow: hidden; /* Para garantir que as bordas arredondadas funcionem */
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08); /* Sombra muito sutil na tabela inteira */
             }}
             table th, table td {{
                 padding: 8px 10px;
@@ -593,6 +638,97 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                 background: #f5f5f5;
                 font-weight: bold;
                 cursor: pointer;
+                position: relative;
+                padding-right: 20px; /* Espaço para o ícone de ordenação */
+                border: 1px solid #ddd; /* Borda sutil para o cabeçalho */
+                box-shadow: 0 1px 2px rgba(0,0,0,0.05); /* Sombra leve para efeito de elevação */
+            }}
+            
+            /* Larguras específicas para as colunas */
+            table th:nth-child(1), table td:nth-child(1) {{
+                width: 80px; /* Coluna ID */
+            }}
+            table th:nth-child(2), table td:nth-child(2) {{
+                min-width: 120px; /* Coluna de status */
+                text-align: center;
+            }}
+            table th:nth-child(3), table td:nth-child(3) {{
+                width: 90px; /* Coluna Tipo */
+            }}
+            table th:nth-child(8), table td:nth-child(8),
+            table th:nth-child(10), table td:nth-child(10),
+            table th:nth-child(14), table td:nth-child(14),
+            table th:nth-child(15), table td:nth-child(15),
+            table th:nth-child(16), table td:nth-child(16) {{
+                width: 90px; /* Colunas de datas */
+            }}
+            /* Alinhar centralmente a coluna Free Time/Deadline */
+            table th:nth-child(9), table td:nth-child(9) {{
+                text-align: center;
+            }}
+            
+            table th:nth-child(17), table td:nth-child(17) {{
+                width: 40px; /* Coluna Dias Armazenados */
+                text-align: center;
+            }}
+            
+            /* Estilos para paginação */
+            .pagination {{
+                display: flex;
+                justify-content: center;
+                margin: 20px 0;
+                user-select: none;
+            }}
+            
+            .pagination-button {{
+                border: 1px solid #ccc;
+                background: #f5f5f5;
+                padding: 5px 10px;
+                margin: 0 5px;
+                cursor: pointer;
+                border-radius: 3px;
+                font-size: 14px;
+                color: #333;
+                min-width: 30px;
+                text-align: center;
+            }}
+            
+            .pagination-button:hover {{
+                background: #e5e5e5;
+            }}
+            
+            .pagination-button.active {{
+                background: #2c3e50;
+                color: white;
+                border-color: #2c3e50;
+                font-weight: bold;
+            }}
+            
+            .pagination-info {{
+                margin: 0 10px;
+                font-size: 14px;
+                color: #666;
+                align-self: center;
+            }}
+            
+            table th:hover {{
+                background: #eaeaea;
+            }}
+            
+            table th.sort-asc::after {{
+                content: "↑";
+                position: absolute;
+                right: 8px;
+                opacity: 1;
+                color: #2c3e50;
+            }}
+            
+            table th.sort-desc::after {{
+                content: "↓";
+                position: absolute;
+                right: 8px;
+                opacity: 1;
+                color: #2c3e50;
             }}
             .process-row {{
                 cursor: pointer;
@@ -608,6 +744,33 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                 background: #f9f9f9;
                 border-radius: 5px;
                 margin: 10px 0;
+                position: relative;
+            }}
+            
+            /* Estilo para botão de fechar detalhes */
+            .close-button {{
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                width: 25px;
+                height: 25px;
+                background-color: #f0f0f0;
+                border-radius: 50%;
+                color: #444;
+                font-size: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+                z-index: 10;
+                transition: all 0.2s ease;
+            }}
+            
+            .close-button:hover {{
+                background-color: #e0e0e0;
+                color: #000;
+                transform: scale(1.1);
             }}
             .tab-container {{
                 overflow: hidden;
@@ -732,18 +895,18 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                     <tr>
                         <th>ID</th>
                         <th>Status</th>
-                        <th>Tipo de Processo</th>
+                        <th>Tipo</th>
                         <th>Referência</th>
                         <th>PO</th>
-                        <th>Origem</th>
+                        <th>Origem/Destino</th>
                         <th>Produto</th>
-                        <th>ETA</th>
-                        <th>Free Time</th>
-                        <th>Vencimento Free Time</th>
-                        <th>Devolução de Vazio</th>
+                        <th>ETA/ETD</th>
+                        <th>Free Time/Deadline</th>
+                        <th>Venc. Free Time</th>
+                        <th>Devolução</th>
                         <th>Mapa</th>
                         <th>Nota Fiscal</th>
-                        <th>Entrada no Porto</th>
+                        <th>Entrada Porto/Terminal</th>
                         <th>Início do Período</th>
                         <th>Vencimento do Período</th>
                         <th>Dias Armazenados</th>
@@ -770,13 +933,25 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
         process_id = row['id']
         status = row.get('status', '')
         status_color = get_status_color(status)
+        # Garante que status não é None para usar upper()
+        if status is None:
+            status = ""
         
         # Linha principal com dados básicos
+        process_type = row.get('type', '')
+        process_type_display = "Importação" if process_type == "importacao" else "Exportação" if process_type == "exportacao" else ""
+        
+        # Labels adaptados de acordo com o tipo de processo
+        origin_label = "Destino" if process_type == "exportacao" else "Origem"
+        eta_label = "ETD" if process_type == "exportacao" else "ETA"
+        freetime_label = "Deadline" if process_type == "exportacao" else "Free Time"
+        entry_label = "Entrada no Terminal" if process_type == "exportacao" else "Entrada no Porto"
+        
         html += f"""
-                    <tr class="process-row" data-id="{process_id}" data-type="{row.get('type', '')}" data-status="{status}" onclick="toggleDetails('{process_id}')">
+                    <tr class="process-row" data-id="{process_id}" data-type="{process_type}" data-status="{status}" onclick="toggleDetails('{process_id}')">
                         <td>{process_id}</td>
-                        <td><div class="status-badge" style="background-color: {status_color}">{status}</div></td>
-                        <td>{"Exportação" if row.get('type', '') == "exportacao" else "Importação"}</td>
+                        <td style="text-align: center;"><div class="status-badge" style="background-color: {status_color}">{status.upper() if status else ''}</div></td>
+                        <td>{process_type_display}</td>
                         <td>{row.get('ref', '')}</td>
                         <td>{row.get('po', '')}</td>
                         <td>{row.get('origin', '')}</td>
@@ -804,6 +979,7 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                     <tr class="details-row" id="details-{process_id}">
                         <td colspan="10">
                             <div class="details-container">
+                                <div class="close-button" onclick="toggleDetails('{process_id}', true)">✖</div>
                                 <div class="tab-container no-print">
                                     <button class="tab active" onclick="openTab(event, '{process_id}-info')">Informações Gerais</button>
                                     <button class="tab" onclick="openTab(event, '{process_id}-transport')">{"Exportação" if process.get('type', '') == "exportacao" else "Transporte"}</button>
@@ -889,19 +1065,19 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                                     <h3>Datas</h3>
                                     <div class="details-grid">
                                         <div class="details-item">
-                                            <div class="details-label">ETA</div>
+                                            <div class="details-label">{"ETD" if process.get('type') == 'exportacao' else "ETA"}</div>
                                             <div class="details-value">{format_date(process.get('eta', ''))}</div>
                                         </div>
                                         <div class="details-item">
-                                            <div class="details-label">Previsão de Chegada</div>
+                                            <div class="details-label">{"Previsão de Saída" if process.get('type') == 'exportacao' else "Previsão de Chegada"}</div>
                                             <div class="details-value">{format_date(process.get('arrival_date', ''))}</div>
                                         </div>
                                         <div class="details-item">
-                                            <div class="details-label">Free Time</div>
+                                            <div class="details-label">{"Deadline" if process.get('type') == 'exportacao' else "Free Time"}</div>
                                             <div class="details-value">{process.get('free_time', '')} dias</div>
                                         </div>
                                         <div class="details-item">
-                                            <div class="details-label">Vencimento Free Time</div>
+                                            <div class="details-label">{"Vencimento Deadline" if process.get('type') == 'exportacao' else "Vencimento Free Time"}</div>
                                             <div class="details-value">{format_date(process.get('free_time_expiry', ''))}</div>
                                         </div>
                                         <div class="details-item">
@@ -912,14 +1088,14 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                                 </div>
                                 
                                 <div id="{process_id}-storage" class="tabcontent">
-                                    <h3>Armazenagem</h3>
+                                    <h3>{"Terminal de Exportação" if process.get('type') == 'exportacao' else "Armazenagem"}</h3>
                                     <div class="details-grid">
                                         <div class="details-item">
-                                            <div class="details-label">Terminal</div>
+                                            <div class="details-label">{"Terminal de Exportação" if process.get('type') == 'exportacao' else "Terminal"}</div>
                                             <div class="details-value">{process.get('terminal', '')}</div>
                                         </div>
                                         <div class="details-item">
-                                            <div class="details-label">Entrada no Porto/Recinto</div>
+                                            <div class="details-label">{"Entrada no Terminal" if process.get('type') == 'exportacao' else "Entrada no Porto/Recinto"}</div>
                                             <div class="details-value">{format_date(process.get('port_entry_date', ''))}</div>
                                         </div>
                                         <div class="details-item">
@@ -949,7 +1125,7 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                                             <div class="details-value">{process.get('invoice_number', '')}</div>
                                         </div>
                                         <div class="details-item">
-                                            <div class="details-label">D.I.</div>
+                                            <div class="details-label">{"DU-E" if process.get('type') == 'exportacao' else "D.I."}</div>
                                             <div class="details-value">{process.get('di', '')}</div>
                                         </div>
                                         <div class="details-item">
@@ -1017,12 +1193,20 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                 </tbody>
             </table>
             
+            <!-- Container para paginação -->
+            <div id="pagination-container"></div>
+            
             <div class="footer">
                 <p>© 2025 JGR BROKER - Todos os direitos reservados</p>
             </div>
         </div>
         
         <script>
+            // Configuração de paginação
+            const ITEMS_PER_PAGE = 10;
+            let currentPage = 1;
+            let filteredRows = [];
+            
             document.addEventListener('DOMContentLoaded', function() {
                 console.log("DOM carregado - iniciando setup");
                 
@@ -1032,10 +1216,11 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                 const statusFilter = document.getElementById('statusFilter');
                 const table = document.getElementById('processesTable');
                 const statusContainer = document.getElementById('statusCounts');
+                const paginationContainer = document.getElementById('pagination-container');
                 
-                if (!filterInput || !processTypeFilter || !statusFilter || !table || !statusContainer) {
+                if (!filterInput || !processTypeFilter || !statusFilter || !table || !statusContainer || !paginationContainer) {
                     console.error("Elementos críticos não encontrados:", {
-                        filterInput, processTypeFilter, statusFilter, table, statusContainer
+                        filterInput, processTypeFilter, statusFilter, table, statusContainer, paginationContainer
                     });
                 }
                 
@@ -1215,6 +1400,9 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                     }
                 });
                 
+                // Reset filtered rows for pagination
+                filteredRows = [];
+                
                 // Aplicar filtros a cada linha
                 for (let i = 0; i < rows.length; i++) {
                     const row = rows[i];
@@ -1239,8 +1427,15 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                     // Verificar filtro de tipo de processo
                     let matchesType = true;
                     if (typeFilter !== 'todos') {
-                        matchesType = (processType === typeFilter) || 
-                                    (typeFilter === 'importacao' && processType === '');
+                        // Comparar tipos normalizados para evitar problemas com maiúsculas/minúsculas
+                        const normalizedType = processType.toLowerCase();
+                        const normalizedFilter = typeFilter.toLowerCase();
+                        
+                        // Melhorar lógica de correspondência para considerar valores vazios ou nulos
+                        matchesType = (normalizedType === normalizedFilter) || 
+                                     (normalizedFilter === 'importacao' && (normalizedType === '' || normalizedType === 'importacao'));
+                        
+                        console.log(`Row ${processId}: processType=${processType}, typeFilter=${typeFilter}, matchesType=${matchesType}`);
                     }
                     
                     // Verificar filtro de status
@@ -1251,23 +1446,17 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                         console.log(`Row ${row.getAttribute('data-id')}: status=${rowStatus}, filter=${statusFilter}, matches=${matchesStatus}`);
                     }
                     
-                    // Aplicar visibilidade
+                    // Check if row passes all filters
                     const isVisible = matchesText && matchesType && matchesStatus;
-                    row.style.display = isVisible ? '' : 'none';
                     
-                    // Fechar detalhes se a linha for ocultada
-                    if (processId) {
-                        const detailsRow = document.getElementById('details-' + processId);
-                        if (detailsRow) {
-                            if (!isVisible) {
-                                detailsRow.style.display = 'none';
-                                row.classList.remove('active');
-                            }
-                        }
-                    }
-                    
-                    // Atualizar contadores de status visíveis
+                    // Instead of directly showing/hiding rows, collect them for pagination
                     if (isVisible) {
+                        filteredRows.push(row);
+                        
+                        // Hide all rows initially (pagination will show them)
+                        row.style.display = 'none';
+                        
+                        // Atualizar contadores de status visíveis
                         // Método 3 (mais confiável): Usar o atributo data-status
                         const status = row.getAttribute('data-status');
                         
@@ -1350,7 +1539,7 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
             }
             
             // Expandir/colapsar detalhes
-            function toggleDetails(processId) {
+            function toggleDetails(processId, isClose = false) {
                 const row = document.querySelector(`tr[data-id="${processId}"]`);
                 const detailsRow = document.getElementById('details-' + processId);
                 
@@ -1361,6 +1550,13 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                 
                 // Verificar estado atual
                 const isVisible = detailsRow.style.display === 'table-row';
+                
+                // Se estamos fechando (botão X) ou alternando um item já aberto, fechar
+                if (isClose || isVisible) {
+                    detailsRow.style.display = 'none';
+                    if (row) row.classList.remove('active');
+                    return;
+                }
                 
                 // Primeiro, fechar todos os detalhes abertos
                 const allDetailRows = document.querySelectorAll('tr[id^="details-"]');
@@ -1476,6 +1672,345 @@ def generate_processes_table_html(filtered_df=None, process_ids=None, include_de
                         }
                     });
                 });
+            });
+            
+            // Inicializar ordenação da tabela
+            initTableSorting();
+            
+            // Função para inicializar ordenação da tabela
+            function initTableSorting() {
+                const table = document.getElementById('processesTable');
+                const headers = table.querySelectorAll('th');
+                
+                // Definir colunas especiais para ordenação de datas e números
+                const dateColumns = [7, 9, 11, 14, 15, 16]; // ETA, Vencimento Free Time, etc.
+                const numberColumns = [8, 17]; // Free Time, Dias Armazenados
+                
+                headers.forEach((header, index) => {
+                    header.addEventListener('click', () => {
+                        sortTable(table, index, dateColumns.includes(index), numberColumns.includes(index));
+                    });
+                });
+            }
+            
+            // Função para ordenar tabela
+            function sortTable(table, column, isDate, isNumber) {
+                const tbody = table.querySelector('tbody');
+                const rows = Array.from(tbody.querySelectorAll('tr.process-row'));
+                
+                // Detectar se já está ordenada nesta coluna
+                const currentSort = tbody.getAttribute('data-sort-column');
+                const currentDir = tbody.getAttribute('data-sort-dir');
+                
+                // Definir direção da ordenação
+                let direction = 'asc';
+                if (currentSort == column) {
+                    direction = currentDir === 'asc' ? 'desc' : 'asc';
+                }
+                
+                // Marcar cabeçalho como ordenado
+                const headers = table.querySelectorAll('th');
+                headers.forEach(th => {
+                    th.classList.remove('sort-asc', 'sort-desc');
+                });
+                headers[column].classList.add(direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                
+                // Ordenar linhas
+                rows.sort((a, b) => {
+                    // Obter valores das células
+                    let aValue = a.cells[column].textContent.trim();
+                    let bValue = b.cells[column].textContent.trim();
+                    
+                    // Tratar células vazias
+                    if (aValue === '') return 1;
+                    if (bValue === '') return -1;
+                    
+                    // Conversão para comparação
+                    if (isDate) {
+                        // Converter data formato DD/MM/YYYY para YYYY-MM-DD para comparação
+                        aValue = aValue.split('/').reverse().join('-');
+                        bValue = bValue.split('/').reverse().join('-');
+                    } else if (isNumber) {
+                        // Converter para número
+                        aValue = parseFloat(aValue) || 0;
+                        bValue = parseFloat(bValue) || 0;
+                    }
+                    
+                    // Comparação
+                    if (aValue < bValue) return direction === 'asc' ? -1 : 1;
+                    if (aValue > bValue) return direction === 'asc' ? 1 : -1;
+                    return 0;
+                });
+                
+                // Reordenar as linhas na tabela
+                rows.forEach(row => {
+                    const processId = row.getAttribute('data-id');
+                    const detailsRow = document.getElementById('details-' + processId);
+                    
+                    // Remover a linha e sua linha de detalhes
+                    tbody.removeChild(row);
+                    if (detailsRow) tbody.removeChild(detailsRow);
+                    
+                    // Adicionar de volta na nova ordem
+                    tbody.appendChild(row);
+                    if (detailsRow) tbody.appendChild(detailsRow);
+                });
+                
+                // Salvar estado de ordenação
+                tbody.setAttribute('data-sort-column', column);
+                tbody.setAttribute('data-sort-dir', direction);
+                
+                // Atualizar paginação após ordenação
+                window.filterTable();
+            }
+            
+            // Configuração de paginação
+            const ITEMS_PER_PAGE = 10;
+            let currentPage = 1;
+            let filteredRows = [];
+            
+            // Função para mostrar a página atual
+            function showPage(page) {
+                // Esconder todas as linhas filtradas
+                filteredRows.forEach(row => {
+                    row.style.display = 'none';
+                    
+                    // Também esconder as linhas de detalhes
+                    const rowId = row.getAttribute('data-id');
+                    if (rowId) {
+                        const detailsRow = document.getElementById(`details-${rowId}`);
+                        if (detailsRow) {
+                            detailsRow.style.display = 'none';
+                        }
+                    }
+                });
+                
+                // Calcular os índices das linhas a serem exibidas
+                const startIdx = (page - 1) * ITEMS_PER_PAGE;
+                const endIdx = Math.min(startIdx + ITEMS_PER_PAGE, filteredRows.length);
+                
+                // Exibir somente as linhas da página atual
+                for (let i = startIdx; i < endIdx; i++) {
+                    filteredRows[i].style.display = '';
+                }
+                
+                // Atualizar a interface de paginação
+                updateActivePage(page);
+            }
+            
+            // Função para atualizar a interface de paginação
+            function updatePagination() {
+                const totalPages = Math.ceil(filteredRows.length / ITEMS_PER_PAGE);
+                const paginationContainer = document.getElementById('pagination-container');
+                paginationContainer.innerHTML = '';
+                
+                if (totalPages <= 1) {
+                    return; // Não mostrar paginação se houver apenas uma página
+                }
+                
+                // Criar o componente de paginação
+                const pagination = document.createElement('div');
+                pagination.className = 'pagination';
+                
+                // Botão Anterior
+                const prevButton = document.createElement('div');
+                prevButton.className = 'pagination-button';
+                prevButton.innerText = '«';
+                prevButton.addEventListener('click', () => {
+                    if (currentPage > 1) {
+                        currentPage--;
+                        showPage(currentPage);
+                    }
+                });
+                pagination.appendChild(prevButton);
+                
+                // Botões de página
+                const maxVisiblePages = 5; // Número máximo de botões de página visíveis
+                let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                
+                // Ajustar se estamos próximos ao final
+                if (endPage - startPage < maxVisiblePages - 1) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+                
+                // Primeira página (se não estiver visível)
+                if (startPage > 1) {
+                    const firstPageBtn = document.createElement('div');
+                    firstPageBtn.className = 'pagination-button';
+                    firstPageBtn.innerText = '1';
+                    firstPageBtn.addEventListener('click', () => {
+                        currentPage = 1;
+                        showPage(currentPage);
+                    });
+                    pagination.appendChild(firstPageBtn);
+                    
+                    // Adicionar elipses se necessário
+                    if (startPage > 2) {
+                        const ellipsis = document.createElement('div');
+                        ellipsis.className = 'pagination-info';
+                        ellipsis.innerText = '...';
+                        pagination.appendChild(ellipsis);
+                    }
+                }
+                
+                // Botões de página regulares
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = document.createElement('div');
+                    pageButton.className = 'pagination-button';
+                    if (i === currentPage) {
+                        pageButton.classList.add('active');
+                    }
+                    pageButton.innerText = i;
+                    pageButton.addEventListener('click', () => {
+                        currentPage = i;
+                        showPage(currentPage);
+                    });
+                    pagination.appendChild(pageButton);
+                }
+                
+                // Última página (se não estiver visível)
+                if (endPage < totalPages) {
+                    // Adicionar elipses se necessário
+                    if (endPage < totalPages - 1) {
+                        const ellipsis = document.createElement('div');
+                        ellipsis.className = 'pagination-info';
+                        ellipsis.innerText = '...';
+                        pagination.appendChild(ellipsis);
+                    }
+                    
+                    const lastPageBtn = document.createElement('div');
+                    lastPageBtn.className = 'pagination-button';
+                    lastPageBtn.innerText = totalPages;
+                    lastPageBtn.addEventListener('click', () => {
+                        currentPage = totalPages;
+                        showPage(currentPage);
+                    });
+                    pagination.appendChild(lastPageBtn);
+                }
+                
+                // Botão Próximo
+                const nextButton = document.createElement('div');
+                nextButton.className = 'pagination-button';
+                nextButton.innerText = '»';
+                nextButton.addEventListener('click', () => {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        showPage(currentPage);
+                    }
+                });
+                pagination.appendChild(nextButton);
+                
+                // Adicionar informação da página atual
+                const pageInfo = document.createElement('div');
+                pageInfo.className = 'pagination-info';
+                pageInfo.id = 'page-info';
+                pageInfo.innerText = `Página ${currentPage} de ${totalPages}`;
+                pagination.appendChild(pageInfo);
+                
+                paginationContainer.appendChild(pagination);
+            }
+            
+            // Função para atualizar o botão de página ativa
+            function updateActivePage(page) {
+                // Atualizar classe ativa nos botões
+                document.querySelectorAll('.pagination-button').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.innerText === page.toString()) {
+                        btn.classList.add('active');
+                    }
+                });
+                
+                // Atualizar informação da página
+                const pageInfo = document.getElementById('page-info');
+                if (pageInfo) {
+                    const totalPages = Math.ceil(filteredRows.length / ITEMS_PER_PAGE);
+                    pageInfo.innerText = `Página ${page} de ${totalPages}`;
+                }
+            }
+            
+            // Modificar a função filterTable original
+            document.addEventListener('DOMContentLoaded', function() {
+                // Guardar referência à função original
+                const originalFilterTable = window.filterTable;
+                
+                // Sobrescrever a função filterTable
+                window.filterTable = function() {
+                    // Obter os filtros atuais
+                    const filterValue = document.getElementById('filterInput')?.value?.toLowerCase() || '';
+                    const typeFilter = document.getElementById('processTypeFilter')?.value || 'todos';
+                    const statusFilter = document.getElementById('statusFilter')?.value || 'todos';
+                    
+                    const table = document.getElementById('processesTable');
+                    if (!table) {
+                        console.error("Tabela não encontrada");
+                        return;
+                    }
+                    
+                    // Obter todas as linhas de processos
+                    const rows = Array.from(table.querySelectorAll('tbody tr.process-row'));
+                    
+                    // Redefinir as linhas filtradas para paginação
+                    filteredRows = [];
+                    
+                    // Aplicar filtros e coletar linhas visíveis
+                    rows.forEach(row => {
+                        // Esconder todas as linhas inicialmente
+                        row.style.display = 'none';
+                        
+                        const cells = row.cells;
+                        const processType = row.getAttribute('data-type') || '';
+                        const rowStatus = row.getAttribute('data-status') || '';
+                        
+                        // Verificar filtro de texto
+                        let matchesText = !filterValue;
+                        if (filterValue) {
+                            for (let j = 0; j < cells.length; j++) {
+                                if (!cells[j]) continue;
+                                
+                                const cellText = cells[j].textContent.toLowerCase();
+                                if (cellText.includes(filterValue)) {
+                                    matchesText = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // Verificar filtro de tipo de processo
+                        let matchesType = true;
+                        if (typeFilter !== 'todos') {
+                            matchesType = (processType === typeFilter) || 
+                                        (typeFilter === 'importacao' && processType === '');
+                        }
+                        
+                        // Verificar filtro de status
+                        let matchesStatus = true;
+                        if (statusFilter !== 'todos') {
+                            matchesStatus = (rowStatus === statusFilter);
+                        }
+                        
+                        // Adicionar à lista de linhas filtradas se passar por todos os filtros
+                        if (matchesText && matchesType && matchesStatus) {
+                            filteredRows.push(row);
+                        }
+                    });
+                    
+                    // Atualizar a contagem total
+                    const processCounter = document.getElementById('process-counter');
+                    if (processCounter) {
+                        processCounter.textContent = filteredRows.length;
+                    }
+                    
+                    // Atualizar paginação e mostrar a primeira página
+                    currentPage = 1;
+                    updatePagination();
+                    showPage(currentPage);
+                };
+                
+                // Inicializar paginação após carregar a página
+                setTimeout(() => {
+                    window.filterTable();
+                }, 500);
             });
         </script>
     </body>

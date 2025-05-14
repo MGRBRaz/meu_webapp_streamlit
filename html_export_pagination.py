@@ -274,17 +274,20 @@ def export_html_with_pagination(filtered_df=None, process_ids=None, title="Relat
         
         // Função para alternar entre abas nos detalhes
         function openTab(evt, tabId) {
-            var i, tabcontent, tablinks;
+            // Obter o ID do processo (primeira parte do ID da aba)
+            const processId = tabId.split('-')[0];
             
-            // Ocultar todos os conteúdos de aba
-            tabcontent = document.getElementsByClassName("tabcontent");
-            for (i = 0; i < tabcontent.length; i++) {
-                tabcontent[i].style.display = "none";
+            // Ocultar apenas os conteúdos de aba deste processo
+            var tabcontent = document.getElementsByClassName("tabcontent");
+            for (var i = 0; i < tabcontent.length; i++) {
+                if (tabcontent[i].id.startsWith(processId)) {
+                    tabcontent[i].style.display = "none";
+                }
             }
             
-            // Remover a classe "active" de todas as abas
-            tablinks = document.getElementsByClassName("tablink");
-            for (i = 0; i < tablinks.length; i++) {
+            // Remover a classe "active" apenas das abas deste processo
+            var tablinks = evt.currentTarget.parentNode.getElementsByClassName("tab");
+            for (var i = 0; i < tablinks.length; i++) {
                 tablinks[i].className = tablinks[i].className.replace(" active", "");
             }
             
@@ -416,13 +419,44 @@ def export_html_with_pagination(filtered_df=None, process_ids=None, title="Relat
                 
                 // Comparar datas se ambas forem datas
                 if (isDateA && isDateB) {
-                    // Converter formato DD/MM/YYYY para YYYY-MM-DD para comparação
-                    const dateA = cellA.split('/').reverse().join('-');
-                    const dateB = cellB.split('/').reverse().join('-');
+                    // Converter formato DD/MM/YYYY para um formato adequado para comparação
+                    // Formato: ANO-MÊS-DIA para garantir ordenação lexicográfica correta
+                    const partsA = cellA.split('/');
+                    const partsB = cellB.split('/');
                     
+                    // Verificar se temos 3 partes em cada data (dia, mês, ano)
+                    if (partsA.length != 3 || partsB.length != 3) {
+                        // Fallback para comparação de texto se formato for inválido
+                        return sortDirection === 'asc' 
+                            ? cellA.localeCompare(cellB) 
+                            : cellB.localeCompare(cellA);
+                    }
+                    
+                    // Valores dos dias, meses e anos
+                    // No formato brasileiro: DD/MM/AAAA
+                    // partsA[0] = Dia, partsA[1] = Mês, partsA[2] = Ano
+                    
+                    // Garantir que anos tenham 4 dígitos
+                    const yearA = partsA[2].padStart(4, '0');
+                    const yearB = partsB[2].padStart(4, '0');
+                    
+                    // Garantir que meses e dias tenham 2 dígitos
+                    const monthA = partsA[1].padStart(2, '0');
+                    const monthB = partsB[1].padStart(2, '0');
+                    const dayA = partsA[0].padStart(2, '0');
+                    const dayB = partsB[0].padStart(2, '0');
+                    
+                    // Criar strings no formato AAAA-MM-DD para comparação lexicográfica
+                    const dateStrA = `${yearA}-${monthA}-${dayA}`;
+                    const dateStrB = `${yearB}-${monthB}-${dayB}`;
+                    
+                    // Comparar as strings de data no formato AAAA-MM-DD
+                    // Para ETA (data estimada de chegada):
+                    // - Ordem crescente (asc): mostra primeiro as datas mais próximas/antigas (ex: 2024-05-01 antes de 2024-06-01)
+                    // - Ordem decrescente (desc): mostra primeiro as datas mais distantes/recentes (ex: 2024-06-01 antes de 2024-05-01)
                     return sortDirection === 'asc' 
-                        ? dateA.localeCompare(dateB) 
-                        : dateB.localeCompare(dateA);
+                        ? dateStrA.localeCompare(dateStrB)  // Crescente: data mais antiga/próxima primeiro
+                        : dateStrB.localeCompare(dateStrA);  // Decrescente: data mais recente/distante primeiro
                 }
                 
                 // Determinar se ambas as células contêm números
@@ -503,7 +537,7 @@ def export_html_with_pagination(filtered_df=None, process_ids=None, title="Relat
                         detailsRow.style.display = 'table-row';
                         
                         // Ativar a primeira aba por padrão quando abre os detalhes
-                        const firstTablink = detailsRow.querySelector('.tablink');
+                        const firstTablink = detailsRow.querySelector('.tab');
                         if (firstTablink) {
                             // Extrair o ID da aba do onclick de forma mais robusta
                             const onclickAttr = firstTablink.getAttribute('onclick');
@@ -518,9 +552,16 @@ def export_html_with_pagination(filtered_df=None, process_ids=None, title="Relat
                             else if (match2 && match2[1]) tabId = match2[1];
                             else if (match3 && match3[1]) tabId = match3[1];
                             if (tabId) {
-                                // Ocultar todas as abas primeiro
-                                const tabcontents = detailsRow.querySelectorAll('.tabcontent');
-                                tabcontents.forEach(tab => tab.style.display = 'none');
+                                // Obter ID do processo
+                                const processId = tabId.split('-')[0];
+                                
+                                // Ocultar todas as abas de conteúdo deste processo
+                                const tabcontents = document.querySelectorAll('.tabcontent');
+                                tabcontents.forEach(tab => {
+                                    if (tab.id.startsWith(processId)) {
+                                        tab.style.display = 'none';
+                                    }
+                                });
                                 
                                 // Mostrar a primeira aba
                                 const firstTab = document.getElementById(tabId);
@@ -528,8 +569,12 @@ def export_html_with_pagination(filtered_df=None, process_ids=None, title="Relat
                                     firstTab.style.display = 'block';
                                 }
                                 
+                                // Remover classe ativa de todas as abas deste processo
+                                const tabs = detailsRow.querySelectorAll('.tab');
+                                tabs.forEach(tab => tab.classList.remove('active'));
+                                
                                 // Marcar a primeira aba como ativa
-                                firstTablink.className += ' active';
+                                firstTablink.classList.add('active');
                             }
                         }
                     } else {
@@ -568,8 +613,20 @@ def export_html_with_pagination(filtered_df=None, process_ids=None, title="Relat
                     
                     // Filtrar por tipo de processo
                     if (selectedType !== 'todos') {
-                        const processType = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
-                        if (!processType.includes(selectedType)) {
+                        // Obter o tipo como atributo data-type para maior precisão
+                        const rowType = row.getAttribute('data-type') || '';
+                        // Também buscar o texto da célula como backup
+                        const processTypeText = row.querySelector('td:nth-child(3)')?.textContent.toLowerCase() || '';
+                        
+                        console.log(`Comparando tipo: row-type="${rowType}", selectedType="${selectedType}", célula="${processTypeText}"`);
+                        
+                        // Verificar correspondência no atributo data-type ou no texto da célula
+                        const matchesType = 
+                            rowType.toLowerCase() === selectedType || 
+                            processTypeText.includes('importação') && selectedType === 'importacao' ||
+                            processTypeText.includes('exportação') && selectedType === 'exportacao';
+                            
+                        if (!matchesType) {
                             showRow = false;
                         }
                     }

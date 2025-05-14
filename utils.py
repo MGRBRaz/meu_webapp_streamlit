@@ -45,14 +45,116 @@ def calculate_period_expiry(start_date, days_per_period):
 def calculate_storage_days(entry_date):
     """Calculate storage days from entry date to today"""
     if pd.isna(entry_date) or entry_date == "":
-        return "0"
+        return 0  # Retorna número inteiro
     try:
         entry_obj = pd.to_datetime(entry_date, dayfirst=True)
         today = pd.to_datetime(datetime.now().date())
         days = (today - entry_obj).days
-        return str(max(0, days))
+        return max(0, days)  # Retorna número inteiro, não string
     except:
-        return "0"
+        return 0  # Retorna número inteiro
+
+def check_period_expiry(process):
+    """
+    Verifica se o período atual de armazenagem expirou e precisa ser atualizado.
+    Lida com múltiplos períodos expirados, atualizando até a data mais recente.
+    
+    Args:
+        process: Dicionário com informações do processo
+        
+    Returns:
+        tuple: (precisa_atualizar, novo_inicio, novo_vencimento)
+    """
+    # Verificar se temos as datas necessárias
+    period_expiry = process.get("current_period_expiry", "")
+    period_start = process.get("current_period_start", "")
+    
+    if pd.isna(period_expiry) or period_expiry == "":
+        return False, None, None
+    
+    try:
+        # Converter para objetos datetime
+        expiry_date = pd.to_datetime(period_expiry, dayfirst=True)
+        today = pd.to_datetime(datetime.now().date())
+        
+        # Determinar os dias por período (padrão: 30 dias)
+        days_per_period = 30  # Valor padrão
+        
+        try:
+            # Tentar obter o valor configurado
+            from streamlit import session_state
+            if "data" in session_state and "config" in session_state.data:
+                days_per_period = session_state.data["config"].get("storage_days_per_period", 30)
+        except:
+            pass
+        
+        # Verificar se a data de vencimento já passou
+        if expiry_date < today:
+            # Se já passou, precisamos verificar quantos períodos passaram
+            # para calcular a data atual correta
+            
+            # Número máximo de períodos a avançar para evitar loop infinito
+            max_periods = 24  # Limite para 2 anos
+            current_expiry = expiry_date
+            current_start = pd.to_datetime(period_start, dayfirst=True) if period_start else None
+            
+            # Avançar períodos até chegar à data atual
+            for _ in range(max_periods):
+                # O novo início do período é o dia seguinte ao vencimento anterior
+                new_start_date = current_expiry + pd.Timedelta(days=1)
+                
+                # Calcular o novo vencimento
+                new_expiry_date = new_start_date + pd.Timedelta(days=days_per_period-1)
+                
+                # Se o novo vencimento ainda é passado, continuar avançando
+                if new_expiry_date < today:
+                    current_start = new_start_date
+                    current_expiry = new_expiry_date
+                    continue
+                
+                # Encontramos o período atual
+                return True, new_start_date.strftime("%d/%m/%Y"), new_expiry_date.strftime("%d/%m/%Y")
+            
+            # Se chegarmos aqui, significa que atingimos o limite de períodos
+            # Usaremos o último período calculado
+            return True, current_start.strftime("%d/%m/%Y"), current_expiry.strftime("%d/%m/%Y")
+        
+        # Se não passou, não precisamos atualizar
+        return False, None, None
+    except Exception as e:
+        print(f"Erro ao verificar vencimento do período: {e}")
+        return False, None, None
+
+def update_period_dates(process):
+    """
+    Atualiza as datas de início e vencimento do período atual se necessário.
+    
+    Args:
+        process: Dicionário com informações do processo
+        
+    Returns:
+        bool: True se houve atualização, False caso contrário
+    """
+    # Verificar se o período expirou
+    needs_update, new_start, new_expiry = check_period_expiry(process)
+    
+    if needs_update and new_start and new_expiry:
+        # Atualizar as datas no processo
+        process["current_period_start"] = new_start
+        process["current_period_expiry"] = new_expiry
+        
+        # Adicionar evento registrando a atualização
+        event_description = f"Período atualizado automaticamente: início {new_start}, vencimento {new_expiry}"
+        
+        try:
+            from data import add_event
+            add_event(process["id"], event_description)
+        except Exception as e:
+            print(f"Erro ao adicionar evento de atualização de período: {e}")
+        
+        return True
+    
+    return False
 
 def get_status_color(status):
     """Get color for status indicator"""

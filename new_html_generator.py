@@ -132,12 +132,20 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
             display: block;
         }}
         table th, table td {{
-            text-align: left;
+            text-align: center;
             padding: 10px;
             border: 1px solid #ddd;
             word-break: break-word;
             vertical-align: middle;
         }}
+        /* Ajustando alinhamento específico por coluna */
+        table td:nth-child(1), table th:nth-child(1) {{ text-align: center; }} /* ID */
+        table td:nth-child(2), table th:nth-child(2) {{ text-align: center; }} /* Status */
+        table td:nth-child(3), table th:nth-child(3) {{ text-align: center; }} /* Tipo */
+        table td:nth-child(4), table th:nth-child(4) {{ text-align: left; }}   /* Referência */
+        table td:nth-child(5), table th:nth-child(5) {{ text-align: left; }}   /* PO */
+        table td:nth-child(6), table th:nth-child(6) {{ text-align: left; }}   /* Origem/Destino */
+        table td:nth-child(7), table th:nth-child(7) {{ text-align: left; }}   /* Produto */
         table th {{
             background-color: #f2f2f2;
             color: #2c3e50;
@@ -165,6 +173,10 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
             text-align: center;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
             min-width: 100px;
+            transition: transform 0.2s ease;
+        }}
+        .status-badge:hover {{
+            transform: scale(1.05);
         }}
         .filter-container {{
             margin-bottom: 20px;
@@ -337,9 +349,12 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
         }}
         .process-row {{
             cursor: pointer;
+            transition: all 0.2s ease;
         }}
         .process-row:hover {{
-            background-color: #f5f5f5;
+            background-color: #f1f7fd;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
         }}
         .details-row {{
             display: none;
@@ -349,6 +364,8 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
             background: #f9f9f9;
             border-radius: 5px;
             margin: 10px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-left: 3px solid #2c3e50;
         }}
         .tab-container {{
             overflow: hidden;
@@ -365,6 +382,8 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
             padding: 10px 16px;
             transition: 0.3s;
             font-size: 14px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
         }}
         .tab:hover {{
             background-color: #ddd;
@@ -372,14 +391,60 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
         .tab.active {{
             background-color: #2c3e50;
             color: white;
+            border-bottom: 2px solid #007bff;
         }}
+        
+        /* Estilo para o botão de fechar */
+        .close-btn {{
+            display: inline-block;
+            padding: 3px 8px;
+            background: #f1f1f1;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #555;
+            font-weight: bold;
+            font-size: 18px;
+            line-height: 18px;
+            transition: all 0.2s ease;
+        }}
+        .close-btn:hover {{
+            background: #e0e0e0;
+            color: #333;
+            transform: scale(1.1);
+        }}
+        
         .tabcontent {{
             display: none;
             padding: 15px;
             border: 1px solid #ccc;
             border-top: none;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.05) inset;
             border-radius: 0 0 5px 5px;
         }}
+        /* Estilo para badges de tipo de processo */
+        .process-type-badge {{
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            background-color: #f8f9fa;
+            color: #495057;
+            border: 1px solid #dee2e6;
+            margin-right: 5px;
+            font-weight: 500;
+        }}
+        .process-type-importacao {{
+            background-color: #e6f7ff;
+            border-color: #91d5ff;
+            color: #0050b3;
+        }}
+        .process-type-exportacao {{
+            background-color: #f6ffed;
+            border-color: #b7eb8f;
+            color: #237804;
+        }}
+        
         .details-grid {{
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -391,14 +456,17 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
         .details-label {{
             font-weight: bold;
             font-size: 0.9em;
-            color: #555;
-            margin-bottom: 5px;
+            color: #2c3e50;
+            border-bottom: 1px dotted #ddd;
+            padding-bottom: 3px;
+            margin-bottom: 3px;
         }}
         .details-value {{
             background: #f5f5f5;
             padding: 8px;
             border-radius: 4px;
             font-size: 0.95em;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05) inset;
         }}
         .footer {{
             text-align: center;
@@ -516,23 +584,23 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
         <table id="processesTable">
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Status</th>
-                    <th>Tipo de Processo</th>
-                    <th>Referência</th>
-                    <th>PO</th>
-                    <th>Origem</th>
-                    <th>Produto</th>
-                    <th>ETA</th>
-                    <th>Free Time</th>
-                    <th>Vencimento Free Time</th>
-                    <th>Devolução de Vazio</th>
-                    <th>Mapa</th>
-                    <th>Nota Fiscal</th>
-                    <th>Entrada no Porto</th>
-                    <th>Início do Período</th>
-                    <th>Vencimento do Período</th>
-                    <th>Dias Armazenados</th>
+                    <th style="text-align: center;">ID</th>
+                    <th style="text-align: center;">Status</th>
+                    <th style="text-align: center;">Tipo de Processo</th>
+                    <th style="text-align: left;">Referência</th>
+                    <th style="text-align: left;">PO</th>
+                    <th style="text-align: left;">Origem</th>
+                    <th style="text-align: left;">Produto</th>
+                    <th style="text-align: center;">ETA</th>
+                    <th style="text-align: center;">Free Time</th>
+                    <th style="text-align: center;">Vencimento Free Time</th>
+                    <th style="text-align: center;">Devolução de Vazio</th>
+                    <th style="text-align: left;">Mapa</th>
+                    <th style="text-align: left;">Nota Fiscal</th>
+                    <th style="text-align: center;">Entrada no Porto</th>
+                    <th style="text-align: center;">Início do Período</th>
+                    <th style="text-align: center;">Vencimento do Período</th>
+                    <th style="text-align: center;">Dias Armazenados</th>
                 </tr>
             </thead>
             <tbody>
@@ -563,23 +631,23 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
         # Linha principal com dados básicos
         html += f"""
                 <tr class="process-row" data-id="{process_id}" data-type="{row.get('type', '')}" data-status="{status}" onclick="toggleDetails('{process_id}')">
-                    <td>{process_id}</td>
+                    <td style="text-align: center;">{process_id}</td>
                     <td style="text-align: center;"><div class="status-badge" style="background-color: {status_color}">{status.upper() if status else ''}</div></td>
-                    <td>{"Exportação" if row.get('type', '') == "exportacao" else "Importação"}</td>
-                    <td>{row.get('ref', '')}</td>
-                    <td>{row.get('po', '')}</td>
-                    <td>{row.get('origin', '')}</td>
-                    <td>{row.get('product', '')}</td>
-                    <td>{format_date(row.get('eta', ''))}</td>
-                    <td>{row.get('free_time', '')}</td>
-                    <td>{format_date(row.get('free_time_expiry', ''))}</td>
-                    <td>{format_date(row.get('empty_return', ''))}</td>
-                    <td>{row.get('map', '')}</td>
-                    <td>{row.get('invoice_number', '')}</td>
-                    <td>{format_date(row.get('port_entry_date', ''))}</td>
-                    <td>{format_date(row.get('current_period_start', ''))}</td>
-                    <td>{format_date(row.get('current_period_expiry', ''))}</td>
-                    <td>{row.get('storage_days', '')}</td>
+                    <td style="text-align: center;"><span class="process-type-badge process-type-{row.get('type', 'importacao')}">{"Exportação" if row.get('type', '') == "exportacao" else "Importação"}</span></td>
+                    <td style="text-align: left;">{row.get('ref', '')}</td>
+                    <td style="text-align: left;">{row.get('po', '')}</td>
+                    <td style="text-align: left;">{row.get('origin', '')}</td>
+                    <td style="text-align: left;">{row.get('product', '')}</td>
+                    <td style="text-align: center;">{format_date(row.get('eta', ''))}</td>
+                    <td style="text-align: center;">{row.get('free_time', '')}</td>
+                    <td style="text-align: center;">{format_date(row.get('free_time_expiry', ''))}</td>
+                    <td style="text-align: center;">{format_date(row.get('empty_return', ''))}</td>
+                    <td style="text-align: left;">{row.get('map', '')}</td>
+                    <td style="text-align: left;">{row.get('invoice_number', '')}</td>
+                    <td style="text-align: center;">{format_date(row.get('port_entry_date', ''))}</td>
+                    <td style="text-align: center;">{format_date(row.get('current_period_start', ''))}</td>
+                    <td style="text-align: center;">{format_date(row.get('current_period_expiry', ''))}</td>
+                    <td style="text-align: center;">{row.get('storage_days', '')}</td>
                 </tr>
         """
         
@@ -589,6 +657,9 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
                 <tr id="details-{process_id}" class="details-row">
                     <td colspan="17">
                         <div class="details-container">
+                            <div style="text-align: right; margin-bottom: 5px;">
+                                <span class="close-btn" onclick="toggleDetails('{process_id}')" title="Fechar detalhes">&times;</span>
+                            </div>
                             <div class="tab-container">
                                 <button class="tab active" onclick="openTab(event, '{process_id}-info')">Informações</button>
                                 <button class="tab" onclick="openTab(event, '{process_id}-dates')">Datas</button>
@@ -725,9 +796,9 @@ def generate_html_with_pagination(filtered_df, title="Relatório de Processos", 
                                 <table>
                                     <thead>
                                         <tr>
-                                            <th>Data</th>
-                                            <th>Descrição</th>
-                                            <th>Usuário</th>
+                                            <th style="text-align: center;">Data</th>
+                                            <th style="text-align: left;">Descrição</th>
+                                            <th style="text-align: left;">Usuário</th>
                                         </tr>
                                     </thead>
                                     <tbody>

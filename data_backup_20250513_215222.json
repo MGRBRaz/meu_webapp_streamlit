@@ -7,29 +7,29 @@
             "origin": "CHINA",
             "type": "importacao",
             "container_type": "FCL 1 X 40",
+            "eta": "",
             "status": "Novo Processo",
             "observations": "",
-            "container": "",
-            "terminal": "1111",
-            "invoice_number": "",
-            "product": "1111111111111111111111111111111111111111111111111111",
-            "last_update": "14/05/2025",
-            "eta": "08/05/2025",
             "exporter": "",
             "ship": "",
             "agent": "",
             "bl_number": "",
+            "container": "",
+            "terminal": "1111111111111111111111111111",
+            "invoice_number": "",
             "di": "",
             "free_time": "7",
-            "free_time_expiry": "15/05/2025",
+            "free_time_expiry": "",
             "po": "11111111",
+            "product": "1111111111111111111111111111111111111111111111111111",
             "map": "",
             "port_entry_date": "01/05/2025",
             "current_period_start": "12/05/2025",
             "current_period_expiry": "27/05/2025",
-            "storage_days": 13,
+            "storage_days": 12,
             "original_docs": "Sim",
             "empty_return": "",
+            "last_update": "13/05/2025",
             "events": [
                 {
                     "date": "12/05/2025",
@@ -60,18 +60,6 @@
                     "date": "12/05/2025",
                     "description": "Per\u00edodo atualizado automaticamente: in\u00edcio 12/05/2025, vencimento 15/05/2025",
                     "user": "Sistema"
-                },
-                {
-                    "date": "13/05/2025",
-                    "description": "Processo atualizado",
-                    "user": "Admin",
-                    "id": "e0af87d9-a8d9-4b5f-94a6-f0d24e802f84"
-                },
-                {
-                    "date": "14/05/2025",
-                    "description": "Processo atualizado",
-                    "user": "Admin",
-                    "id": "8e630cf2-8023-46ab-bd85-c3aa1353eb99"
                 }
             ],
             "archived": false
@@ -321,8 +309,7 @@
                     "description": "Processo criado",
                     "user": "Admin"
                 }
-            ],
-            "archived": false
+            ]
         },
         {
             "id": "20250006",
@@ -361,264 +348,7 @@
                     "description": "Processo criado",
                     "user": "Admin"
                 }
-            ],
-            "archived": false
-        },
-        {
-            "id": "1",
-            "ref": "",
-            "invoice": "1",
-            "origin": "CHINA",
-            "type": "exportacao",
-            "container_type": "FCL 1 X 40",
-            "status": "Em andamento",
-            "observations": "",
-            "container": "",
-            "terminal": "",
-            "invoice_number": "",
-            "product": "",
-            "last_update": "13/05/2025",
-            "importer": "",
-            "dispatch_value": "",
-            "knowledge_number": "",
-            "drawback": "",
-            "tracking_number": "",
-            "export_type": "Mar\u00edtima",
-            "shipping_terminal": "",
-            "redex_clearance": "Sim",
-            "events": [
-                {
-                    "id": "44c46ad7-1281-4a47-984d-89d0cee8e19a",
-                    "date": "13/05/2025",
-                    "description": "Processo criado",
-                    "user": "Admin"
-                }
-            ],
-            "archived": false
-        },
-        {
-            "id": "12435",
-            "ref": "121214313",
-            "invoice": "13131",
-            "origin": "CHINA",
-            "type": "importacao",
-            "container_type": "FCL 1 X 40",
-            "status": "Em andamento",
-            "observations": "",
-            "container": "",
-            "terminal": "",
-            "invoice_number": "",
-            "product": "131313",
-            "last_update": "13/05/2025",
-            "eta": "16/05/2025",
-            "exporter": "",
-            "ship": "",
-            "agent": "",
-            "bl_number": "",
-            "di": "",
-            "free_time": "7",
-            "free_time_expiry": "23/05/2025",
-            "po": "313",
-            "map": "1313131",
-            "port_entry_date": "",
-            "current_period_start": "",
-            "current_period_expiry": "",
-            "storage_days": "0",
-            "original_docs": "Sim",
-            "empty_return": "",
-            "events": [
-                {
-                    "id": "6345bb68-db79-40c6-89ab-25d938fbb346",
-                    "date": "13/05/2025",
-                    "description": "Processo criado",
-                    "user": "Admin"
-                }
-            ],
-            "archived": false
-        },
-        {
-            "id": "20250007",
-            "ref": "",
-            "invoice": "",
-            "origin": "CHINA",
-            "type": "importacao",
-            "container_type": "FCL 1 X 40",
-            "status": "Em andamento",
-            "observations": "",
-            "container": "",
-            "terminal": "",
-            "invoice_number": "",
-            "product": "",
-            "last_update": "13/05/2025",
-            "eta": "",
-            "exporter": "",
-            "ship": "",
-            "agent": "",
-            "bl_number": "",
-            "di": "",
-            "free_time": "7",
-            "free_time_expiry": "",
-            "po": "",
-            "map": "",
-            "port_entry_date": "01/05/2025",
-            "current_period_start": "01/05/2025",
-            "current_period_expiry": "16/05/2025",
-            "storage_days": 13,
-            "original_docs": "Sim",
-            "empty_return": "",
-            "events": [
-                {
-                    "id": "4f11ced4-3b17-4bb5-a02e-3c3c70da87ca",
-                    "date": "13/05/2025",
-                    "description": "Processo criado",
-                    "user": "Admin"
-                },
-                {
-                    "date": "13/05/2025",
-                    "description": "Processo atualizado",
-                    "user": "Admin",
-                    "id": "2fa4e2a8-0805-4195-8cf9-76120c9048ef"
-                }
-            ],
-            "archived": false
-        },
-        {
-            "id": "11",
-            "ref": "",
-            "invoice": "11",
-            "origin": "CHINA",
-            "type": "importacao",
-            "container_type": "FCL 1 X 40",
-            "status": "Em andamento",
-            "observations": "",
-            "container": "212",
-            "terminal": "",
-            "invoice_number": "",
-            "product": "",
-            "last_update": "13/05/2025",
-            "eta": "",
-            "exporter": "112312121",
-            "ship": "1121212",
-            "agent": "12121212121",
-            "bl_number": "11",
-            "di": "",
-            "free_time": "7",
-            "free_time_expiry": "",
-            "po": "",
-            "map": "",
-            "port_entry_date": "01/05/2025",
-            "current_period_start": "01/05/2025",
-            "current_period_expiry": "16/05/2025",
-            "storage_days": 13,
-            "original_docs": "Sim",
-            "empty_return": "",
-            "events": [
-                {
-                    "id": "61753d4a-8a26-4924-aa6b-5f2e5ec5d1c9",
-                    "date": "13/05/2025",
-                    "description": "Processo criado",
-                    "user": "Admin"
-                }
-            ],
-            "archived": false
-        },
-        {
-            "id": "20250008",
-            "ref": "referencia01",
-            "invoice": "",
-            "origin": "CHINA",
-            "type": "importacao",
-            "container_type": "FCL 1 X 40",
-            "status": "Em andamento",
-            "observations": "",
-            "container": "",
-            "terminal": "",
-            "invoice_number": "",
-            "product": "",
-            "last_update": "13/05/2025",
-            "eta": "",
-            "exporter": "",
-            "ship": "",
-            "agent": "",
-            "bl_number": "",
-            "di": "",
-            "free_time": "7",
-            "free_time_expiry": "",
-            "po": "",
-            "map": "",
-            "port_entry_date": "01/01/2025",
-            "current_period_start": "02/05/2025",
-            "current_period_expiry": "31/05/2025",
-            "storage_days": 133,
-            "original_docs": "Sim",
-            "empty_return": "",
-            "events": [
-                {
-                    "id": "ea9b1dbf-126e-46fd-a628-10fc44ae3227",
-                    "date": "13/05/2025",
-                    "description": "Processo criado",
-                    "user": "Admin"
-                },
-                {
-                    "date": "13/05/2025",
-                    "description": "Processo atualizado",
-                    "user": "Admin",
-                    "id": "5ce28f70-5919-4e25-aaac-0d05659bcf09"
-                },
-                {
-                    "id": "137ad718-981c-476c-82bf-64aa22ab2b58",
-                    "date": "13/05/2025",
-                    "description": "Per\u00edodo atualizado automaticamente: in\u00edcio 17/04/2025, vencimento 01/05/2025",
-                    "user": "Sistema"
-                },
-                {
-                    "id": "e567debb-bdff-4466-b5b0-f13aed98868b",
-                    "date": "13/05/2025",
-                    "description": "Per\u00edodo atualizado automaticamente: in\u00edcio 02/05/2025, vencimento 31/05/2025",
-                    "user": "Sistema"
-                }
-            ],
-            "archived": false
-        },
-        {
-            "id": "20250009",
-            "ref": "",
-            "invoice": "",
-            "origin": "CHINA",
-            "type": "importacao",
-            "container_type": "FCL 1 X 40",
-            "status": "Navio em Santos",
-            "observations": "",
-            "container": "",
-            "terminal": "",
-            "invoice_number": "",
-            "product": "",
-            "last_update": "13/05/2025",
-            "eta": "",
-            "exporter": "",
-            "ship": "",
-            "agent": "",
-            "bl_number": "",
-            "di": "",
-            "free_time": "7",
-            "free_time_expiry": "",
-            "po": "",
-            "map": "",
-            "port_entry_date": "",
-            "current_period_start": "",
-            "current_period_expiry": "",
-            "storage_days": "0",
-            "original_docs": "Sim",
-            "empty_return": "",
-            "events": [
-                {
-                    "id": "c5ec80f9-545a-4721-8df6-62ece70cd7e4",
-                    "date": "13/05/2025",
-                    "description": "Processo criado",
-                    "user": "Admin"
-                }
-            ],
-            "archived": false
+            ]
         }
     ],
     "next_id": "20250001",

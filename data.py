@@ -15,7 +15,7 @@ DEFAULT_DATA = {
         "phone": "+55 (XX) XXXX-XXXX"
     },
     "config": {
-        "storage_days_per_period": 30  # Dias por período de armazenagem (configurável)
+        "storage_days_per_period": 5  # Dias por período de armazenagem (configurável para teste: 5 dias)
     },
     "processes": [
         {
@@ -105,6 +105,8 @@ def load_data():
             data = DEFAULT_DATA
             
         # Garantir que todos os processos tenham campos necessários
+        periods_updated = []  # Lista para acompanhar quais processos tiveram períodos atualizados
+        
         for process in data["processes"]:
             # Garantir que todos os eventos tenham IDs únicos
             if "events" in process:
@@ -123,12 +125,51 @@ def load_data():
             if "type" not in process:
                 process["type"] = "importacao"  # Valor padrão
             
+            # Garantir que exista o campo 'archived' (para funcionalidade de arquivamento)
+            if "archived" not in process:
+                process["archived"] = False
+            
             # Para registros antigos, converter 'type' do tipo de carga para tipo de processo
             if process.get("type") in ["FCL 1 X 40", "FCL 1 X 20", "LCL"]:
                 # Guardar o tipo de container/carga em outro campo
                 process["container_type"] = process["type"]
                 # Definir o tipo de processo como importação (valor padrão)
                 process["type"] = "importacao"
+            
+            # Verificar se o período atual expirou e precisa ser atualizado
+            try:
+                from utils import check_period_expiry
+                
+                needs_update, new_start, new_expiry = check_period_expiry(process)
+                if needs_update and new_start and new_expiry:
+                    # Atualizar as datas no processo
+                    process["current_period_start"] = new_start
+                    process["current_period_expiry"] = new_expiry
+                    
+                    # Adicionar evento registrando a atualização
+                    now = datetime.now().strftime("%d/%m/%Y")
+                    event_id = str(uuid.uuid4())
+                    
+                    if "events" not in process:
+                        process["events"] = []
+                    
+                    event_description = f"Período atualizado automaticamente: início {new_start}, vencimento {new_expiry}"
+                    process["events"].append({
+                        "id": event_id,
+                        "date": now,
+                        "description": event_description,
+                        "user": "Sistema"
+                    })
+                    
+                    process["last_update"] = now
+                    periods_updated.append(process["id"])
+            except Exception as e:
+                print(f"Erro ao verificar/atualizar período do processo {process.get('id', 'unknown')}: {e}")
+        
+        # Se houve atualizações, salvar os dados
+        if periods_updated:
+            print(f"Períodos atualizados para os processos: {', '.join(periods_updated)}")
+            save_data(data)
         
         return data
     except Exception as e:
@@ -156,6 +197,37 @@ def update_process(process_data):
     """Update an existing process"""
     for i, process in enumerate(st.session_state.data["processes"]):
         if process["id"] == process_data["id"]:
+            # Verificar se o período atual expirou antes de salvar as alterações
+            try:
+                from utils import check_period_expiry
+                
+                needs_update, new_start, new_expiry = check_period_expiry(process_data)
+                if needs_update and new_start and new_expiry:
+                    # Atualizar as datas no processo
+                    process_data["current_period_start"] = new_start
+                    process_data["current_period_expiry"] = new_expiry
+                    
+                    # Adicionar evento registrando a atualização
+                    now = datetime.now().strftime("%d/%m/%Y")
+                    event_id = str(uuid.uuid4())
+                    
+                    if "events" not in process_data:
+                        process_data["events"] = []
+                    
+                    event_description = f"Período atualizado automaticamente: início {new_start}, vencimento {new_expiry}"
+                    process_data["events"].append({
+                        "id": event_id,
+                        "date": now,
+                        "description": event_description,
+                        "user": "Sistema"
+                    })
+                    
+                    process_data["last_update"] = now
+                    print(f"Período atualizado para o processo {process_data['id']}")
+            except Exception as e:
+                print(f"Erro ao verificar/atualizar período do processo {process_data.get('id', 'unknown')}: {e}")
+            
+            # Atualizar o processo com os dados atualizados
             st.session_state.data["processes"][i] = process_data
             save_data(st.session_state.data)
             return True
@@ -177,10 +249,41 @@ def add_process(process_data):
     
     # Add creation event
     process_data["events"].append({
+        "id": str(uuid.uuid4()),
         "date": now,
         "description": "Processo criado",
         "user": "Admin"
     })
+    
+    # Configurar período inicial baseado na data de entrada no porto/recinto
+    port_entry_date = process_data.get("port_entry_date", "")
+    if port_entry_date and not process_data.get("current_period_start"):
+        # Usar a data de entrada como início do período atual
+        process_data["current_period_start"] = port_entry_date
+        
+        # Calcular o vencimento baseado nos dias configurados
+        try:
+            from utils import calculate_period_expiry
+            
+            # Obter os dias por período da configuração global
+            days_per_period = 30  # valor padrão
+            if "data" in st.session_state and "config" in st.session_state.data:
+                days_per_period = st.session_state.data["config"].get("storage_days_per_period", 30)
+            
+            # Calcular e definir a data de vencimento
+            period_expiry = calculate_period_expiry(port_entry_date, days_per_period)
+            if period_expiry:
+                process_data["current_period_expiry"] = period_expiry
+                
+                # Adicionar evento de configuração do período
+                process_data["events"].append({
+                    "id": str(uuid.uuid4()),
+                    "date": now,
+                    "description": f"Período inicial configurado: início {port_entry_date}, vencimento {period_expiry}",
+                    "user": "Sistema"
+                })
+        except Exception as e:
+            print(f"Erro ao configurar período inicial: {e}")
     
     st.session_state.data["processes"].append(process_data)
     save_data(st.session_state.data)
@@ -309,33 +412,152 @@ def generate_process_id():
     next_num = int(max_id[4:]) + 1
     return f"{year}{next_num:04d}"
 
-def get_processes_df():
-    """Convert processes to a DataFrame for display"""
+def archive_process(process_id):
+    """Arquivar um processo pelo ID"""
+    for i, process in enumerate(st.session_state.data["processes"]):
+        if process["id"] == process_id:
+            st.session_state.data["processes"][i]["archived"] = True
+            
+            # Adicionar evento de arquivamento
+            now = datetime.now().strftime("%d/%m/%Y")
+            event_id = str(uuid.uuid4())
+            
+            if "events" not in st.session_state.data["processes"][i]:
+                st.session_state.data["processes"][i]["events"] = []
+                
+            st.session_state.data["processes"][i]["events"].append({
+                "id": event_id,
+                "date": now,
+                "description": "Processo arquivado",
+                "user": st.session_state.get('username', 'Admin')
+            })
+            
+            st.session_state.data["processes"][i]["last_update"] = now
+            save_data(st.session_state.data)
+            return True
+    return False
+
+def unarchive_process(process_id):
+    """Desarquivar um processo pelo ID"""
+    for i, process in enumerate(st.session_state.data["processes"]):
+        if process["id"] == process_id:
+            st.session_state.data["processes"][i]["archived"] = False
+            
+            # Adicionar evento de desarquivamento
+            now = datetime.now().strftime("%d/%m/%Y")
+            event_id = str(uuid.uuid4())
+            
+            if "events" not in st.session_state.data["processes"][i]:
+                st.session_state.data["processes"][i]["events"] = []
+                
+            st.session_state.data["processes"][i]["events"].append({
+                "id": event_id,
+                "date": now,
+                "description": "Processo reativado",
+                "user": st.session_state.get('username', 'Admin')
+            })
+            
+            st.session_state.data["processes"][i]["last_update"] = now
+            save_data(st.session_state.data)
+            return True
+    return False
+
+def get_processes_df(include_archived=False):
+    """Convert processes to a DataFrame for display
+    
+    Args:
+        include_archived: Se True, inclui processos arquivados. Se False (padrão), exclui arquivados.
+    """
     if not st.session_state.data["processes"]:
         return pd.DataFrame()
     
-    df = pd.DataFrame(st.session_state.data["processes"])
+    # Filtrar processos de acordo com o status de arquivamento
+    filtered_processes = []
+    for process in st.session_state.data["processes"]:
+        is_archived = process.get("archived", False)
+        if (include_archived and is_archived) or (not include_archived and not is_archived):
+            filtered_processes.append(process)
     
-    # Atualizar os dias armazenados para todos os processos
+    if not filtered_processes:
+        return pd.DataFrame()
+        
+    df = pd.DataFrame(filtered_processes)
+    
+    # Verificar e atualizar os períodos, e atualizar os dias armazenados para todos os processos
+    updated_processes = []
     for i, process in enumerate(st.session_state.data["processes"]):
+        # 1. Verificar e atualizar o período atual se necessário
+        if "current_period_expiry" in process and process["current_period_expiry"]:
+            from utils import check_period_expiry
+            
+            needs_update, new_start, new_expiry = check_period_expiry(process)
+            if needs_update and new_start and new_expiry:
+                # Verificar se a última data de vencimento já passou
+                try:
+                    # Atualizar as datas no processo
+                    st.session_state.data["processes"][i]["current_period_start"] = new_start
+                    st.session_state.data["processes"][i]["current_period_expiry"] = new_expiry
+                    
+                    # Adicionar evento registrando a atualização
+                    now = datetime.now().strftime("%d/%m/%Y")
+                    event_id = str(uuid.uuid4())
+                    event_description = f"Período atualizado automaticamente: início {new_start}, vencimento {new_expiry}"
+                    
+                    if "events" not in st.session_state.data["processes"][i]:
+                        st.session_state.data["processes"][i]["events"] = []
+                    
+                    st.session_state.data["processes"][i]["events"].append({
+                        "id": event_id,
+                        "date": now,
+                        "description": event_description,
+                        "user": "Sistema"
+                    })
+                    
+                    updated_processes.append(process["id"])
+                except Exception as e:
+                    print(f"Erro ao atualizar período: {e}")
+        
+        # 2. Atualizar os dias armazenados
         if "port_entry_date" in process and process["port_entry_date"]:
             try:
                 entry_date = pd.to_datetime(process["port_entry_date"], dayfirst=True)
                 today = pd.to_datetime(datetime.now().date())
                 days_stored = (today - entry_date).days
-                st.session_state.data["processes"][i]["storage_days"] = str(max(0, days_stored))
+                # Salvar como número inteiro para permitir ordenação correta
+                st.session_state.data["processes"][i]["storage_days"] = max(0, days_stored)
             except Exception as e:
-                pass
+                # Caso ocorra um erro, garantir que storage_days seja um número
+                if "storage_days" in st.session_state.data["processes"][i]:
+                    try:
+                        # Converter string para inteiro se existente
+                        days_str = st.session_state.data["processes"][i]["storage_days"]
+                        st.session_state.data["processes"][i]["storage_days"] = int(days_str)
+                    except (ValueError, TypeError):
+                        # Se não conseguir converter, definir como 0
+                        st.session_state.data["processes"][i]["storage_days"] = 0
+    
+    # Informar quais processos foram atualizados
+    if updated_processes:
+        print(f"Períodos atualizados para os processos: {', '.join(updated_processes)}")
+    
+    # Salvar os dados para persistir os dias armazenados atualizados
+    save_data(st.session_state.data)
     
     # Atualizar o DataFrame
-    df = pd.DataFrame(st.session_state.data["processes"])
+    df = pd.DataFrame(filtered_processes)
+    
+    # Garantir que storage_days seja numérico para todos os processos
+    if 'storage_days' in df.columns:
+        df['storage_days'] = pd.to_numeric(df['storage_days'], errors='coerce').fillna(0).astype(int)
     
     # Select columns for main table view (removido "id" conforme solicitado)
     display_columns = [
-        "status", "po", "ref", "origin", "product", "eta", 
+        "status", "type", "po", "ref", "origin", "product", "eta", 
         "free_time", "free_time_expiry", "empty_return", "map", 
         "invoice_number", "port_entry_date", "current_period_start", 
-        "current_period_expiry", "storage_days", "original_docs"
+        "current_period_expiry", "storage_days", "original_docs",
+        # Campos específicos para exportação
+        "cargo_deadline", "deadline_draft", "export_type"
     ]
     
     # Manter o id para uso interno, embora não seja exibido na tabela
@@ -354,7 +576,11 @@ def get_processes_df():
     # Formatação das colunas de data para o padrão brasileiro (DD/MM/YYYY)
     date_columns = [
         "eta", "free_time_expiry", "empty_return", "port_entry_date", 
-        "current_period_start", "current_period_expiry", "return_date"
+        "current_period_start", "current_period_expiry", "return_date",
+        # Campos de datas específicos para exportação
+        "cargo_deadline", "deadline_draft", "due_date", "knowledge_date", 
+        "endorsement_date", "shipping_date", "arrival_forecast", 
+        "client_delivery_date", "originals_sent_date"
     ]
     
     # Aplicar formatação apenas às colunas de data que existem no dataframe
