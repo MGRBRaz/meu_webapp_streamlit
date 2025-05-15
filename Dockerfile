@@ -9,6 +9,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copiar o resto dos arquivos da aplicação
 COPY . .
 
+# Garantir que os arquivos necessários estejam presentes
+RUN ls -la /app/data.py  
+RUN ls -la /app/components/
+
+# Configurar PYTHONPATH para incluir diretório raiz
+ENV PYTHONPATH="/app:${PYTHONPATH}"
+
 # Expor a porta que o Streamlit usa
 EXPOSE 8501
 

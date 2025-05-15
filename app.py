@@ -2,8 +2,25 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import os
+import sys
 import urllib.parse
 
+# Adicionar diretório atual ao PYTHONPATH, se necessário
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.insert(0, current_dir)
+
+# Verificação do ambiente
+try:
+    import data
+    print(f"Módulo data encontrado: {data.__file__}")
+except ImportError as e:
+    print(f"Erro ao importar o módulo data: {e}")
+    print(f"PYTHONPATH: {sys.path}")
+    print(f"Conteúdo do diretório atual: {os.listdir('.')}")
+    raise
+
+# Agora importamos os componentes
 from components.home import display_home
 from components.add_edit import display_add_edit_form
 from components.view_details import display_detail_view
